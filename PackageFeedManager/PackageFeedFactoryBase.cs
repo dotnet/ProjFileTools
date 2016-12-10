@@ -1,0 +1,26 @@
+﻿using System.Collections.Concurrent;
+
+namespace PackageFeedManager
+{
+
+    internal abstract class PackageFeedFactoryBase : IPackageFeedFactory
+    {
+        private static readonly ConcurrentDictionary<string, IPackageFeed> Instances = new ConcurrentDictionary<string, IPackageFeed>();
+
+        protected abstract bool CanHandle(string feed);
+
+        protected abstract IPackageFeed Create(string feed);
+
+        public virtual bool TryHandle(string feed, out IPackageFeed instance)
+        {
+            if (!CanHandle(feed))
+            {
+                instance = null;
+                return false;
+            }
+
+            instance = Instances.GetOrAdd(feed, Create);
+            return true;
+        }
+    }
+}
