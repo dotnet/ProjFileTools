@@ -12,11 +12,11 @@ namespace ProjectFileTools
     [Name("Default Package Feed Registry Provider")]
     internal class PackageFeedRegistryProvider : IPackageFeedRegistryProvider
     {
-        private readonly IVsPackageSourceProvider _provider;
+        private readonly object _provider;
         private readonly IWebRequestFactory _webRequestFactory;
 
         [ImportingConstructor]
-        public PackageFeedRegistryProvider(IVsPackageSourceProvider provider, IWebRequestFactory webRequestFactory)
+        public PackageFeedRegistryProvider([Import("NuGet.VisualStudio.IVsPackageSourceProvider")]object provider, IWebRequestFactory webRequestFactory)
         {
             _webRequestFactory = webRequestFactory;
             _provider = provider;
@@ -27,7 +27,7 @@ namespace ProjectFileTools
             get
             {
                 List<string> sources = new List<string>();
-                IEnumerable<KeyValuePair<string, string>> enabledSources = _provider.GetSources(true, false);
+                IEnumerable<KeyValuePair<string, string>> enabledSources = (IEnumerable<KeyValuePair<string, string>>)_provider.GetType().GetMethod("GetSources").Invoke(_provider, new object[] { true, false });
 
                 foreach (KeyValuePair<string, string> curEnabledSource in enabledSources)
                 {

@@ -13,12 +13,12 @@ namespace PackageFeedManager
     {
         public bool DirectoryExists(string path)
         {
-            return Directory.Exists(path);
+            return path.IndexOfAny(Path.GetInvalidPathChars()) < 0 && Directory.Exists(path);
         }
 
         public IEnumerable<string> EnumerateDirectories(string path, string pattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly)
         {
-            if (!Directory.Exists(path))
+            if (!DirectoryExists(path))
             {
                 return Enumerable.Empty<string>();
             }
@@ -28,7 +28,7 @@ namespace PackageFeedManager
 
         public IEnumerable<string> EnumerateFiles(string path, string pattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly)
         {
-            if (!Directory.Exists(path))
+            if (!DirectoryExists(path))
             {
                 return Enumerable.Empty<string>();
             }
@@ -38,7 +38,7 @@ namespace PackageFeedManager
 
         public bool FileExists(string path)
         {
-            return File.Exists(path);
+            return path.IndexOfAny(Path.GetInvalidPathChars()) < 0 && File.Exists(path);
         }
 
         public string GetDirectoryName(string path)

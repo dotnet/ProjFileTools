@@ -10,11 +10,11 @@ namespace ProjectFileTools
 {
 
     internal class IntraTextAdornmentTagger<TTag> : ITagger<IntraTextAdornmentTag>
-        where TTag: IntraTextAdornmentTag
+        where TTag : IntraTextAdornmentTagBase
     {
         private readonly ITextBuffer _textBuffer;
         private readonly ITextView _textView;
-        private readonly Dictionary<NormalizedSnapshotSpanCollection, TTag> _map = new Dictionary<NormalizedSnapshotSpanCollection, TTag>();
+        private readonly Dictionary<SnapshotSpan, TTag> _map = new Dictionary<SnapshotSpan, TTag>();
         private static readonly string PropertyName = typeof(TTag).Name;
         private readonly IIntraTextAdornmentFactory<TTag> _factory;
 
@@ -29,7 +29,7 @@ namespace ProjectFileTools
 
         public static ITagger<ITag> GetOrCreate(ITextView textView, ITextBuffer textBuffer, IIntraTextAdornmentFactory<TTag> factory)
         {
-            if(!textBuffer.Properties.TryGetProperty(PropertyName, out IntraTextAdornmentTagger<TTag> existingTagger))
+            if (!textBuffer.Properties.TryGetProperty(PropertyName, out IntraTextAdornmentTagger<TTag> existingTagger))
             {
                 existingTagger = new IntraTextAdornmentTagger<TTag>(textView, textBuffer, factory);
                 textBuffer.Properties.AddProperty(PropertyName, existingTagger);
@@ -40,13 +40,13 @@ namespace ProjectFileTools
 
         public IEnumerable<ITagSpan<IntraTextAdornmentTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
-            if(spans == null || spans.Count == 0)
+            if (spans == null || spans.Count == 0)
             {
                 yield break;
             }
 
             ITextSnapshot snapshot = spans[0].Snapshot;
-            IEnumerable<SnapshotSpan> translatedSpans = spans.Select(span => span.TranslateTo(snapshot, SpanTrackingMode.EdgeExclusive));
+            IEnumerable<SnapshotSpan> translatedSpans = spans.Select(span => span.TranslateTo(snapshot, SpanTrackingMode.EdgeInclusive));
             NormalizedSnapshotSpanCollection normalizedSpans = new NormalizedSnapshotSpanCollection(translatedSpans);
             // Grab the adornments.
             IEnumerable<TagSpan<TTag>> tagSpans = GetAdornmentTagsOnSnapshot(normalizedSpans);
@@ -59,55 +59,52 @@ namespace ProjectFileTools
 
         private IEnumerable<TagSpan<TTag>> GetAdornmentTagsOnSnapshot(NormalizedSnapshotSpanCollection spans)
         {
-            if (spans.Count == 0)
-            {
-                yield break;
-            }
-
             ITextSnapshot snapshot = spans[0].Snapshot;
-            HashSet<NormalizedSnapshotSpanCollection> updates = new HashSet<NormalizedSnapshotSpanCollection>();
+            string spanText = snapshot.GetText();
+            int lastOpen = spanText.IndexOf("<PackageReference", StringComparison.Ordinal);
 
-            foreach(NormalizedSnapshotSpanCollection entry in _map.Keys)
+            while (lastOpen > -1)
             {
-                if (spans.IntersectsWith(entry[0].TranslateTo(spans[0].Snapshot, SpanTrackingMode.EdgeInclusive)))
-                {
-                    updates.Add(entry);
-                }
-            }
+                int include = spanText.IndexOf("Include", lastOpen, StringComparison.Ordinal);
 
-            foreach(SnapshotSpan span in spans)
-            {
-                TTag existingTag = null;
-                NormalizedSnapshotSpanCollection existingSpan = null;
-                foreach(NormalizedSnapshotSpanCollection update in updates)
+                if (include > -1)
                 {
-                    if(update[0].TranslateTo(span.Snapshot, SpanTrackingMode.EdgeInclusive).IntersectsWith(span))
+                    int quote = spanText.IndexOf('"', lastOpen);
+
+                    if (quote > -1)
                     {
-                        existingSpan = update;
-                        existingTag = _map[update];
-                        updates.Remove(update);
-                        break;
+                        SnapshotSpan s = new SnapshotSpan(snapshot, new Span(quote + 1, 1));
+                        KeyValuePair<SnapshotSpan, TTag> existingTag = _map.FirstOrDefault(x => x.Key.TranslateTo(snapshot, SpanTrackingMode.EdgeInclusive).IntersectsWith(s));
+                        if (_factory.TryCreateOrUpdate(_textView, s, existingTag.Value, out TagSpan<TTag> targetTag, out Span valueSpan))
+                        {
+                            if (existingTag.Key != null)
+                            {
+                                if (!existingTag.Key.Equals(targetTag.Span))
+                                {
+                                    _map.Remove(existingTag.Key);
+                                    _map[targetTag.Span] = targetTag.Tag;
+                                }
+                            }
+                            else
+                            {
+                                _map[targetTag.Span] = targetTag.Tag;
+                            }
+
+                            if (spans.Any(x => x.OverlapsWith(valueSpan)))
+                            {
+                                targetTag.Tag.UpdateLayout();
+                                yield return targetTag;
+                            }
+                        }
                     }
                 }
 
-                SnapshotSpan calc = span;
-                if (existingSpan != null)
+                if (lastOpen + 1 >= spanText.Length)
                 {
-                    calc = existingSpan[0];
-                    _map.Remove(existingSpan);
+                    break;
                 }
 
-                if(_factory.TryCreateOrUpdate(_textView, calc, existingTag, out TagSpan<TTag> targetTag))
-                {
-                    _map[new NormalizedSnapshotSpanCollection(targetTag.Span)] = targetTag.Tag;
-                    targetTag.Tag.Adornment.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                    yield return targetTag;
-                }
-            }
-
-            foreach(NormalizedSnapshotSpanCollection update in updates)
-            {
-                _map.Remove(update);
+                lastOpen = spanText.IndexOf("<PackageReference", lastOpen + 1, StringComparison.Ordinal);
             }
         }
     }
