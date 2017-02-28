@@ -41,4 +41,4 @@ extension for Visual Studio which enables some features
 used by this project.
 
 ## License
-[Apache 2.0](LICENSE)
+[MIT](LICENSE)
