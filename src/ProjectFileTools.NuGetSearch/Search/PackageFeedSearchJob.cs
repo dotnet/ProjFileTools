@@ -74,6 +74,11 @@ namespace ProjectFileTools.NuGetSearch.Search
 
         public void Cancel()
         {
+            if(RemainingFeeds.Count == 0)
+            {
+                return;
+            }
+
             if (!_cancellationTokenSource.IsCancellationRequested)
             {
                 lock (_cancellationSync)

@@ -157,7 +157,7 @@ namespace ProjectFileTools.Completion
             ITrackingPoint point = session.GetTriggerPoint(_textBuffer);
             int pos = point.GetPosition(snapshot);
 
-            if(_pos == pos && _currentSession != null)
+            if (_pos == pos && _currentSession != null)
             {
                 completionSets.Add(_currentCompletionSet);
                 return;
@@ -226,13 +226,25 @@ namespace ProjectFileTools.Completion
                     break;
             }
 
+            _currentCompletionSet = new PackageCompletionSet("PackageCompletion", "Package Completion", _textBuffer.CurrentSnapshot.CreateTrackingSpan(span, SpanTrackingMode.EdgeInclusive));
+
             if (showLoading)
             {
-                _currentCompletionSet = new PackageCompletionSet("PackageCompletion", "Package Completion", _textBuffer.CurrentSnapshot.CreateTrackingSpan(span, SpanTrackingMode.EdgeInclusive));
                 _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion("Loading..."));
-
-                completionSets.Add(_currentCompletionSet);
             }
+            else
+            {
+                if (_nameSearchJob != null)
+                {
+                    ProduceNameCompletionSet();
+                }
+                else if (_versionSearchJob != null)
+                {
+                    ProduceVersionCompletionSet();
+                }
+            }
+
+            completionSets.Add(_currentCompletionSet);
         }
 
         private void ProduceNameCompletionSet()
@@ -323,7 +335,7 @@ namespace ProjectFileTools.Completion
         {
             ThreadHelper.Generic.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
             {
-                string displayText = _currentCompletionSet.SelectionStatus.Completion.DisplayText;
+                string displayText = _currentCompletionSet.SelectionStatus?.Completion?.DisplayText;
 
                 if (!_currentSession.IsDismissed)
                 {
@@ -338,12 +350,15 @@ namespace ProjectFileTools.Completion
 
                     _currentSession.Filter();
 
-                    foreach(Microsoft.VisualStudio.Language.Intellisense.Completion completion in _currentSession.SelectedCompletionSet.Completions)
+                    if (displayText != null)
                     {
-                        if(completion.DisplayText == displayText)
+                        foreach (Microsoft.VisualStudio.Language.Intellisense.Completion completion in _currentSession.SelectedCompletionSet.Completions)
                         {
-                            _currentCompletionSet.SelectionStatus = new CompletionSelectionStatus(completion, true, true);
-                            break;
+                            if (completion.DisplayText == displayText)
+                            {
+                                _currentCompletionSet.SelectionStatus = new CompletionSelectionStatus(completion, true, true);
+                                break;
+                            }
                         }
                     }
 
