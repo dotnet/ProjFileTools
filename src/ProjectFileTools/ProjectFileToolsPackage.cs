@@ -1,0 +1,14 @@
+﻿using Microsoft.VisualStudio.Shell;
+using System;
+using System.Runtime.InteropServices;
+
+namespace ProjectFileTools
+{
+    [PackageRegistration(UseManagedResourcesOnly = true)]
+    [InstalledProductRegistration("#110", "#112", Vsix.Version, IconResourceID = 400)]
+    [Guid(PackageGuidString)]
+    public sealed class ProjectFileToolsPackage : Package
+    {
+        public const string PackageGuidString = "60347b36-f766-4480-8038-ff1b70212235";
+    }
+}
