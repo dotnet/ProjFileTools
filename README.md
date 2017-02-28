@@ -1,4 +1,4 @@
-# ProjPackageIntellisense
+# Project File Tools
 
 <!-- Replace this badge with your own-->
 [![Build status](https://ci.appveyor.com/api/projects/status/hv6uyc059rqbc6fj?svg=true)](https://ci.appveyor.com/project/madskristensen/extensibilitytools)
