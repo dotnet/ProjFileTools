@@ -2,7 +2,7 @@
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 
-namespace ProjectFileTools
+namespace ProjectFileTools.Adornments
 {
 
     public interface IIntraTextAdornmentFactory<T>

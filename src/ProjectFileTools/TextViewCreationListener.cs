@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
+using ProjectFileTools.Completion;
 
 namespace ProjectFileTools
 {

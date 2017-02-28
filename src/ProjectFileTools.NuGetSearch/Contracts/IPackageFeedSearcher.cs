@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Contracts
 {
 
     public interface IPackageFeedSearcher

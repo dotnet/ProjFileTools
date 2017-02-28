@@ -3,30 +3,28 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
-using PackageFeedManager;
+using ProjectFileTools.NuGetSearch.Contracts;
 
-namespace ProjectFileTools
+namespace ProjectFileTools.Adornments
 {
-    [Export(typeof(IViewTaggerProvider))]
+    //[Export(typeof(IViewTaggerProvider))]
     [ContentType("XML")]
     [TagType(typeof(IntraTextAdornmentTag))]
-    internal class PackageGlyphTaggerProvider : IViewTaggerProvider
+    internal class PackageReferenceGlyphTaggerProvider : IViewTaggerProvider
     {
-        private readonly IBufferTagAggregatorFactoryService _bufferTagAggregatorFactoryService;
         private readonly IPackageSearchManager _searchManager;
 
         [ImportingConstructor]
-        public PackageGlyphTaggerProvider(IPackageSearchManager searchManager, IBufferTagAggregatorFactoryService bufferTagAggregatorFactoryService)
+        public PackageReferenceGlyphTaggerProvider(IPackageSearchManager searchManager)
         {
             _searchManager = searchManager;
-            _bufferTagAggregatorFactoryService = bufferTagAggregatorFactoryService;
         }
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer textBuffer)
             where T : ITag
         {
             IIntraTextAdornmentFactory<PackageGlyphTag> factory = new PackageGlyphTagFactory(_searchManager);
-            return IntraTextAdornmentTagger<PackageGlyphTag>.GetOrCreate(textView, textBuffer, factory) as ITagger<T>;
+            return IntraTextAdornmentTagger<PackageGlyphTag>.GetOrCreate(textView, textBuffer, factory, "PackageReference") as ITagger<T>;
         }
     }
 }

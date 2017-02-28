@@ -6,7 +6,8 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.VisualStudio.Imaging;
-using PackageFeedManager;
+using ProjectFileTools.NuGetSearch;
+using ProjectFileTools.NuGetSearch.Contracts;
 
 namespace ProjectFileTools
 {
@@ -53,12 +54,18 @@ namespace ProjectFileTools
                     _firstRun = false;
                     if (!string.IsNullOrEmpty(package.IconUrl) && Uri.TryCreate(package.IconUrl, UriKind.Absolute, out Uri iconUri))
                     {
-                        if (!SourceLookup.TryGetValue(package.IconUrl, out ImageSource source))
+                        try
                         {
-                            source = SourceLookup[package.IconUrl] = new BitmapImage(iconUri);
-                        }
+                            if (!SourceLookup.TryGetValue(package.IconUrl, out ImageSource source))
+                            {
+                                source = SourceLookup[package.IconUrl] = new BitmapImage(iconUri);
+                            }
 
-                        Glyph.Source = source;
+                            Glyph.Source = source;
+                        }
+                        catch
+                        {
+                        }
                     }
 
                     Description.Text = package.Description;

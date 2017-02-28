@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ProjectFileTools.NuGetSearch.Contracts;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Search
 {
     internal class PackageFeedSearchJob<T> : IPackageFeedSearchJob<T>
     {

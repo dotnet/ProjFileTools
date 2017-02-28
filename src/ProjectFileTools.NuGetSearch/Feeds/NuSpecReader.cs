@@ -1,6 +1,7 @@
 ﻿using System.Xml.Linq;
+using ProjectFileTools.NuGetSearch.Contracts;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Feeds
 {
 
     internal class NuSpecReader

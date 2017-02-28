@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.IO
 {
     public interface IFileSystem
     {

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
+using ProjectFileTools.NuGetSearch.Feeds;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Contracts
 {
 
     public interface IPackageNameSearchResult

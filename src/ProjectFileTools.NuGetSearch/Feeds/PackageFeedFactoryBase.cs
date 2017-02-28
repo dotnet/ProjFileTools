@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
+using ProjectFileTools.NuGetSearch.Contracts;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Feeds
 {
 
     internal abstract class PackageFeedFactoryBase : IPackageFeedFactory

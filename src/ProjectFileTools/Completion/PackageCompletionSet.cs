@@ -2,19 +2,19 @@
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 
-namespace ProjectFileTools
+namespace ProjectFileTools.Completion
 {
 
     internal class PackageCompletionSet : CompletionSet2
     {
         public PackageCompletionSet(string moniker, string displayName, ITrackingSpan applicableTo)
-            : base(moniker, displayName, applicableTo, new Completion[0], new Completion[0], new IIntellisenseFilter[0])
+            : base(moniker, displayName, applicableTo, new Microsoft.VisualStudio.Language.Intellisense.Completion[0], new Microsoft.VisualStudio.Language.Intellisense.Completion[0], new IIntellisenseFilter[0])
         {
-            AccessibleCompletions = new BulkObservableCollection<Completion>();
+            AccessibleCompletions = new BulkObservableCollection<Microsoft.VisualStudio.Language.Intellisense.Completion>();
         }
 
-        public override IList<Completion> Completions => AccessibleCompletions;
+        public override IList<Microsoft.VisualStudio.Language.Intellisense.Completion> Completions => AccessibleCompletions;
 
-        public BulkObservableCollection<Completion> AccessibleCompletions { get; }
+        public BulkObservableCollection<Microsoft.VisualStudio.Language.Intellisense.Completion> AccessibleCompletions { get; }
     }
 }

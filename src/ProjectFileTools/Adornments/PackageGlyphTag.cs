@@ -1,11 +1,10 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 
-namespace ProjectFileTools
+namespace ProjectFileTools.Adornments
 {
     internal abstract class IntraTextAdornmentTagBase : IntraTextAdornmentTag
     {

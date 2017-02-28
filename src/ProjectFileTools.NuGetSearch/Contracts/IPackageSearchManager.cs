@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+using ProjectFileTools.NuGetSearch.Feeds;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Contracts
 {
 
     public interface IPackageSearchManager

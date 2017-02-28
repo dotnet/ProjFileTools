@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using PackageFeedManager;
+using ProjectFileTools.NuGetSearch.IO;
 
 namespace PackageFeedManagerTests
 {

@@ -1,8 +1,8 @@
-﻿using System;
+﻿using ProjectFileTools.NuGetSearch.Contracts;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Feeds
 {
-    internal class PackageQueryConfiguration : IPackageQueryConfiguration
+    public class PackageQueryConfiguration : IPackageQueryConfiguration
     {
         public PackageQueryConfiguration(string targetFrameworkMoniker, bool includePreRelease = false, int maxResults = 100)
         {

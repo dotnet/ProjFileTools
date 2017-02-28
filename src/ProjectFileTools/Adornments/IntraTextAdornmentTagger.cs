@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 
-namespace ProjectFileTools
+namespace ProjectFileTools.Adornments
 {
-
     internal class IntraTextAdornmentTagger<TTag> : ITagger<IntraTextAdornmentTag>
         where TTag : IntraTextAdornmentTagBase
     {
@@ -17,22 +15,24 @@ namespace ProjectFileTools
         private readonly Dictionary<SnapshotSpan, TTag> _map = new Dictionary<SnapshotSpan, TTag>();
         private static readonly string PropertyName = typeof(TTag).Name;
         private readonly IIntraTextAdornmentFactory<TTag> _factory;
+        private readonly string _tagName;
 
-        public IntraTextAdornmentTagger(ITextView textView, ITextBuffer textBuffer, IIntraTextAdornmentFactory<TTag> factory)
+        public IntraTextAdornmentTagger(ITextView textView, ITextBuffer textBuffer, IIntraTextAdornmentFactory<TTag> factory, string tagName)
         {
             _factory = factory;
             _textView = textView;
             _textBuffer = textBuffer;
+            _tagName = tagName;
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
-        public static ITagger<ITag> GetOrCreate(ITextView textView, ITextBuffer textBuffer, IIntraTextAdornmentFactory<TTag> factory)
+        public static ITagger<ITag> GetOrCreate(ITextView textView, ITextBuffer textBuffer, IIntraTextAdornmentFactory<TTag> factory, string tagName)
         {
-            if (!textBuffer.Properties.TryGetProperty(PropertyName, out IntraTextAdornmentTagger<TTag> existingTagger))
+            if (!textBuffer.Properties.TryGetProperty(PropertyName + "_" + tagName, out IntraTextAdornmentTagger<TTag> existingTagger))
             {
-                existingTagger = new IntraTextAdornmentTagger<TTag>(textView, textBuffer, factory);
-                textBuffer.Properties.AddProperty(PropertyName, existingTagger);
+                existingTagger = new IntraTextAdornmentTagger<TTag>(textView, textBuffer, factory, tagName);
+                textBuffer.Properties.AddProperty(PropertyName + "_" + tagName, existingTagger);
             }
 
             return existingTagger;
@@ -61,7 +61,7 @@ namespace ProjectFileTools
         {
             ITextSnapshot snapshot = spans[0].Snapshot;
             string spanText = snapshot.GetText();
-            int lastOpen = spanText.IndexOf("<PackageReference", StringComparison.Ordinal);
+            int lastOpen = spanText.IndexOf($"<{_tagName}", StringComparison.Ordinal);
 
             while (lastOpen > -1)
             {
@@ -104,7 +104,7 @@ namespace ProjectFileTools
                     break;
                 }
 
-                lastOpen = spanText.IndexOf("<PackageReference", lastOpen + 1, StringComparison.Ordinal);
+                lastOpen = spanText.IndexOf($"<{_tagName}", lastOpen + 1, StringComparison.Ordinal);
             }
         }
     }

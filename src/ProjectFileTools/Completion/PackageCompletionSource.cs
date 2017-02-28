@@ -9,9 +9,11 @@ using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
-using PackageFeedManager;
+using ProjectFileTools.NuGetSearch;
+using ProjectFileTools.NuGetSearch.Contracts;
+using ProjectFileTools.NuGetSearch.Feeds;
 
-namespace ProjectFileTools
+namespace ProjectFileTools.Completion
 {
 
     internal class PackageCompletionSource : ICompletionSource
@@ -61,6 +63,36 @@ namespace ProjectFileTools
             }
 
             string fragmentText = documentText.Substring(start, end - start + 1);
+
+            int healAt = documentText.IndexOf('<', start + 1);
+            bool needsHealing = healAt < end;
+
+            if (needsHealing)
+            {
+                fragmentText = fragmentText.Substring(0, healAt - start);
+
+                switch (fragmentText.Trim().Last())
+                {
+                    case '"':
+                        break;
+                    default:
+                        span = default(Span);
+                        packageName = null;
+                        packageVersion = null;
+                        completionType = null;
+                        return false;
+                }
+
+                int quoteCount = fragmentText.Count(x => x == '"');
+
+                if (quoteCount % 2 == 1)
+                {
+                    fragmentText += "\"";
+                }
+
+                fragmentText += "/>";
+            }
+
             string attributeText = documentText.Substring(startQuote + 1, endQuote - startQuote - 1);
 
             XElement element;
@@ -77,7 +109,7 @@ namespace ProjectFileTools
                 return false;
             }
 
-            if (element.Name != "PackageReference")
+            if (element.Name != "PackageReference" && element.Name != "DotnetCliToolReference")
             {
                 span = default(Span);
                 packageName = null;
@@ -146,6 +178,25 @@ namespace ProjectFileTools
                 return;
             }
 
+            string text = snapshot.GetText();
+            int targetFrameworkElementStartIndex = text.IndexOf("<TargetFramework>", StringComparison.OrdinalIgnoreCase);
+            int targetFrameworksElementStartIndex = text.IndexOf("<TargetFrameworks>", StringComparison.OrdinalIgnoreCase);
+            string tfm = "netcoreapp1.0";
+
+            if (targetFrameworksElementStartIndex > -1)
+            {
+                int closeTfms = text.IndexOf("</TargetFrameworks>", targetFrameworksElementStartIndex);
+                int realStart = targetFrameworksElementStartIndex + "<TargetFrameworks>".Length;
+                string allTfms = text.Substring(realStart, closeTfms - realStart);
+                tfm = allTfms.Split(';')[0];
+            }
+            else if (targetFrameworkElementStartIndex > -1)
+            {
+                int closeTfm = text.IndexOf("</TargetFramework>", targetFrameworkElementStartIndex);
+                int realStart = targetFrameworkElementStartIndex + "<TargetFramework>".Length;
+                tfm = text.Substring(realStart, closeTfm - realStart);
+            }
+
             bool showLoading = false;
             switch (completionType)
             {
@@ -157,9 +208,9 @@ namespace ProjectFileTools
                     }
                     _versionSearchJob?.Cancel();
                     _versionSearchJob = null;
-                    _nameSearchJob = _searchManager.SearchPackageNames(name, "netcoreapp1.0");
+                    _nameSearchJob = _searchManager.SearchPackageNames(name, tfm);
                     _nameSearchJob.Updated += UpdateCompletions;
-                    showLoading = true;
+                    showLoading = _nameSearchJob.RemainingFeeds.Count > 0;
                     break;
                 case "Version":
                     if (_versionSearchJob != null)
@@ -169,16 +220,16 @@ namespace ProjectFileTools
                     }
                     _nameSearchJob?.Cancel();
                     _nameSearchJob = null;
-                    _versionSearchJob = _searchManager.SearchPackageVersions(name, "netcoreapp1.0");
+                    _versionSearchJob = _searchManager.SearchPackageVersions(name, tfm);
                     _versionSearchJob.Updated += UpdateCompletions;
-                    showLoading = true;
+                    showLoading = _versionSearchJob.RemainingFeeds.Count > 0;
                     break;
             }
 
             if (showLoading)
             {
                 _currentCompletionSet = new PackageCompletionSet("PackageCompletion", "Package Completion", _textBuffer.CurrentSnapshot.CreateTrackingSpan(span, SpanTrackingMode.EdgeInclusive));
-                _currentCompletionSet.AccessibleCompletions.Add(new Completion("Loading..."));
+                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion("Loading..."));
 
                 completionSets.Add(_currentCompletionSet);
             }
@@ -186,7 +237,7 @@ namespace ProjectFileTools
 
         private void ProduceNameCompletionSet()
         {
-            List<Completion> completions = new List<Completion>();
+            List<Microsoft.VisualStudio.Language.Intellisense.Completion> completions = new List<Microsoft.VisualStudio.Language.Intellisense.Completion>();
             Dictionary<string, FeedKind> packageLookup = new Dictionary<string, FeedKind>();
 
             foreach(Tuple<string, FeedKind> info in _nameSearchJob.Results)
@@ -216,11 +267,11 @@ namespace ProjectFileTools
 
             if (_nameSearchJob.RemainingFeeds.Count > 0)
             {
-                _currentCompletionSet.AccessibleCompletions.Add(new Completion($"Loading ({_nameSearchJob.RemainingFeeds.Count} remaining)..."));
+                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion($"Loading ({_nameSearchJob.RemainingFeeds.Count} remaining)..."));
             }
             else if (completions.Count == 0)
             {
-                _currentCompletionSet.AccessibleCompletions.Add(new Completion("(No Results)"));
+                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion("(No Results)"));
             }
 
             _currentCompletionSet.AccessibleCompletions.AddRange(completions);
@@ -228,7 +279,7 @@ namespace ProjectFileTools
 
         private void ProduceVersionCompletionSet()
         {
-            List<Completion> completions = new List<Completion>();
+            List<Microsoft.VisualStudio.Language.Intellisense.Completion> completions = new List<Microsoft.VisualStudio.Language.Intellisense.Completion>();
             Dictionary<string, FeedKind> iconMap = new Dictionary<string, FeedKind>();
 
             foreach (Tuple<string, FeedKind> info in _versionSearchJob.Results)
@@ -258,11 +309,11 @@ namespace ProjectFileTools
 
             if (_versionSearchJob.RemainingFeeds.Count > 0)
             {
-                _currentCompletionSet.AccessibleCompletions.Add(new Completion($"Loading ({_versionSearchJob.RemainingFeeds.Count} remaining)..."));
+                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion($"Loading ({_versionSearchJob.RemainingFeeds.Count} remaining)..."));
             }
             else if (completions.Count == 0)
             {
-                _currentCompletionSet.AccessibleCompletions.Add(new Completion("(No Results)"));
+                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion("(No Results)"));
             }
 
             _currentCompletionSet.AccessibleCompletions.AddRange(completions);
@@ -287,7 +338,7 @@ namespace ProjectFileTools
 
                     _currentSession.Filter();
 
-                    foreach(Completion completion in _currentSession.SelectedCompletionSet.Completions)
+                    foreach(Microsoft.VisualStudio.Language.Intellisense.Completion completion in _currentSession.SelectedCompletionSet.Completions)
                     {
                         if(completion.DisplayText == displayText)
                         {

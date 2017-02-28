@@ -5,9 +5,9 @@ using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
-using PackageFeedManager;
+using ProjectFileTools.NuGetSearch.Contracts;
 
-namespace ProjectFileTools
+namespace ProjectFileTools.Completion
 {
     [Export(typeof(IIntellisenseControllerProvider))]
     [Name("Xml Package Intellisense Controller")]

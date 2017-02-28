@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.IO
 {
 
     public static class WebRequestFactoryExtensions

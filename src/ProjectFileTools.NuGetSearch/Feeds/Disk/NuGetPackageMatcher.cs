@@ -1,8 +1,10 @@
 ﻿using System.IO;
 using System.Linq;
 using NuGet.Frameworks;
+using ProjectFileTools.NuGetSearch.Contracts;
+using ProjectFileTools.NuGetSearch.IO;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Feeds.Disk
 {
     internal static class NuGetPackageMatcher
     {

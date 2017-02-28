@@ -1,22 +1,18 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Utilities;
+using ProjectFileTools.NuGetSearch.Contracts;
+using ProjectFileTools.NuGetSearch.Feeds;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Search
 {
-    [Export(typeof(IPackageSearchManager))]
-    [Name("Default Package Search Manager")]
-    internal class PackageSearchManager : IPackageSearchManager
+    public class PackageSearchManager : IPackageSearchManager
     {
         private readonly IPackageFeedFactorySelector _factorySelector;
         private readonly IPackageFeedRegistryProvider _feedRegistry;
 
-        [ImportingConstructor]
         public PackageSearchManager(IPackageFeedRegistryProvider feedRegistry, IPackageFeedFactorySelector factorySelector)
         {
             _feedRegistry = feedRegistry;
@@ -143,7 +139,15 @@ namespace PackageFeedManager
 
                 if (feed != null)
                 {
-                    searchTasks.Add(Tuple.Create(feedSource, feed.GetPackageInfoAsync(packageId, version, config, cancellationToken).ContinueWith(x => (IReadOnlyList<IPackageInfo>)new[] { x.Result })));
+                    searchTasks.Add(Tuple.Create(feedSource, feed.GetPackageInfoAsync(packageId, version, config, cancellationToken).ContinueWith(x =>
+                    {
+                        if (x == null || x.IsFaulted || x.IsCanceled)
+                        {
+                            return new IPackageInfo[0];
+                        }
+
+                        return (IReadOnlyList<IPackageInfo>)new[] { x.Result };
+                    })));
                 }
             }
 

@@ -1,16 +1,15 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using Microsoft.VisualStudio.Utilities;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using ProjectFileTools.NuGetSearch.Contracts;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Feeds
 {
-
-    [Export(typeof(IPackageFeedFactorySelector))]
-    [Name("Default Package Feed Factory Selector")]
-    internal class PackageFeedFactorySelector : IPackageFeedFactorySelector
+    public class PackageFeedFactorySelector : IPackageFeedFactorySelector
     {
-        [ImportingConstructor]
-        public PackageFeedFactorySelector([ImportMany] IEnumerable<IPackageFeedFactory> feedFactories)
+        private readonly ConcurrentDictionary<string, IPackageFeed> _feedCache = new ConcurrentDictionary<string, IPackageFeed>(StringComparer.OrdinalIgnoreCase);
+
+        public PackageFeedFactorySelector(IEnumerable<IPackageFeedFactory> feedFactories)
         {
             FeedFactories = feedFactories;
         }
@@ -19,14 +18,21 @@ namespace PackageFeedManager
 
         public IPackageFeed GetFeed(string source)
         {
+            if (_feedCache.TryGetValue(source, out IPackageFeed match))
+            {
+                return match;
+            }
+
             foreach(IPackageFeedFactory feed in FeedFactories)
             {
                 if (feed.TryHandle(source, out IPackageFeed instance))
                 {
+                    _feedCache[source] = instance;
                     return instance;
                 }
             }
 
+            _feedCache[source] = null;
             return null;
         }
     }

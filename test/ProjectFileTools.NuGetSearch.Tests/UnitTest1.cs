@@ -2,7 +2,10 @@ using System;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NuGet.Frameworks;
-using PackageFeedManager;
+using ProjectFileTools.NuGetSearch.Contracts;
+using ProjectFileTools.NuGetSearch.Feeds;
+using ProjectFileTools.NuGetSearch.Feeds.Disk;
+using ProjectFileTools.NuGetSearch.IO;
 
 namespace PackageFeedManagerTests
 {

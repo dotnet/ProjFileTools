@@ -5,8 +5,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Frameworks;
+using ProjectFileTools.NuGetSearch.Contracts;
+using ProjectFileTools.NuGetSearch.IO;
+using ProjectFileTools.NuGetSearch.Search;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Feeds.Disk
 {
 
     internal class NuGetV3DiskFeed : IPackageFeed

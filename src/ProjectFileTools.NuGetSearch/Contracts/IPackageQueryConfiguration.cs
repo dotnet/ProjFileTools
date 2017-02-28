@@ -1,4 +1,4 @@
-﻿namespace PackageFeedManager
+﻿namespace ProjectFileTools.NuGetSearch.Contracts
 {
     public interface IPackageQueryConfiguration
     {

@@ -5,10 +5,11 @@ using Microsoft.VisualStudio.Imaging;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
-using PackageFeedManager;
-using ProjectFileTools.Status;
+using ProjectFileTools.Completion;
+using ProjectFileTools.NuGetSearch;
+using ProjectFileTools.NuGetSearch.Contracts;
 
-namespace ProjectFileTools
+namespace ProjectFileTools.Adornments
 {
     internal class PackageGlyphTagFactory : IIntraTextAdornmentFactory<PackageGlyphTag>
     {
@@ -34,9 +35,28 @@ namespace ProjectFileTools
             }
             catch { lineHeight = null; }
 
+            string text = span.Snapshot.GetText();
+            int targetFrameworkElementStartIndex = text.IndexOf("<TargetFramework>", StringComparison.OrdinalIgnoreCase);
+            int targetFrameworksElementStartIndex = text.IndexOf("<TargetFrameworks>", StringComparison.OrdinalIgnoreCase);
+            string tfm = "netcoreapp1.0";
+
+            if (targetFrameworksElementStartIndex > -1)
+            {
+                int closeTfms = text.IndexOf("</TargetFrameworks>", targetFrameworksElementStartIndex);
+                int realStart = targetFrameworksElementStartIndex + "<TargetFrameworks>".Length;
+                string allTfms = text.Substring(realStart, closeTfms - realStart);
+                tfm = allTfms.Split(';')[0];
+            }
+            else if (targetFrameworkElementStartIndex > -1)
+            {
+                int closeTfm = text.IndexOf("</TargetFramework>", targetFrameworkElementStartIndex);
+                int realStart = targetFrameworkElementStartIndex + "<TargetFramework>".Length;
+                tfm = text.Substring(realStart, closeTfm - realStart);
+            }
+
             PackageGlyphTag t = existingTag ?? new PackageGlyphTag(PositionAffinity.Predecessor, textView);
             t.PackageIcon.Source = WpfUtil.MonikerToBitmap(KnownMonikers.NuGet, (int)(lineHeight ?? 16));
-            IssueIconQuery(name, ver, "netcoreapp1.0", t);
+            IssueIconQuery(name, ver, tfm, t);
             if (lineHeight.HasValue)
             {
                 t.Wrapper.Height = lineHeight.Value;
@@ -47,7 +67,7 @@ namespace ProjectFileTools
 
         private void IssueIconQuery(string name, string ver, string tfm, PackageGlyphTag t)
         {
-            IPackageFeedSearchJob<IPackageInfo> job = _searchManager.SearchPackageInfo(name, ver, tfm, StatusManager.Instance);
+            IPackageFeedSearchJob<IPackageInfo> job = _searchManager.SearchPackageInfo(name, ver, tfm);
             EventHandler handler = null;
             string currentIcon = null;
 
@@ -56,7 +76,7 @@ namespace ProjectFileTools
                 if (job.IsCancelled)
                 {
                     job.Updated -= handler;
-                    job = _searchManager.SearchPackageInfo(name, ver, tfm, StatusManager.Instance);
+                    job = _searchManager.SearchPackageInfo(name, ver, tfm);
                     job.Updated += handler;
                     handler(o, e);
                     return;

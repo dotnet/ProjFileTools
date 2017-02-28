@@ -2,14 +2,14 @@
 using System.Windows;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Utilities;
-using PackageFeedManager;
+using ProjectFileTools.NuGetSearch.Contracts;
 
-namespace ProjectFileTools
+namespace ProjectFileTools.Completion
 {
-    [Export(typeof(IUIElementProvider<Completion, ICompletionSession>))]
+    [Export(typeof(IUIElementProvider<Microsoft.VisualStudio.Language.Intellisense.Completion, ICompletionSession>))]
     [Name("Package Information Completion Tooltip")]
     [ContentType("XML")]
-    internal class CompletionTooltipElementProvider : IUIElementProvider<Completion, ICompletionSession>
+    internal class CompletionTooltipElementProvider : IUIElementProvider<Microsoft.VisualStudio.Language.Intellisense.Completion, ICompletionSession>
     {
         private readonly IPackageSearchManager _searcher;
 
@@ -19,7 +19,7 @@ namespace ProjectFileTools
             _searcher = searcher;
         }
 
-        public UIElement GetUIElement(Completion itemToRender, ICompletionSession context, UIElementType elementType)
+        public UIElement GetUIElement(Microsoft.VisualStudio.Language.Intellisense.Completion itemToRender, ICompletionSession context, UIElementType elementType)
         {
             if (elementType == UIElementType.Tooltip)
             {

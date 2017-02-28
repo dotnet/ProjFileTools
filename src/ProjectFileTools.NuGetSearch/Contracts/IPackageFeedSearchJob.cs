@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Contracts
 {
     public interface IPackageFeedSearchJob<T>
     {

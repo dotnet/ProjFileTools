@@ -1,4 +1,6 @@
-﻿namespace PackageFeedManager
+﻿using ProjectFileTools.NuGetSearch.Feeds;
+
+namespace ProjectFileTools.NuGetSearch.Contracts
 {
     public interface IPackageInfo
     {

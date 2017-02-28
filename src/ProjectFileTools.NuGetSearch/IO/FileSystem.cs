@@ -1,15 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using Microsoft.VisualStudio.Utilities;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.IO
 {
 
-    [Export(typeof(IFileSystem))]
-    [Name("Default File System Implementation")]
-    internal class FileSystem : IFileSystem
+    public class FileSystem : IFileSystem
     {
         public bool DirectoryExists(string path)
         {

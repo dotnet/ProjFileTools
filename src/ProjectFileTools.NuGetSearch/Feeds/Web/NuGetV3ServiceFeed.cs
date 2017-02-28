@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Utilities;
 using Newtonsoft.Json.Linq;
+using ProjectFileTools.NuGetSearch.Contracts;
+using ProjectFileTools.NuGetSearch.IO;
+using ProjectFileTools.NuGetSearch.Search;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Feeds.Web
 {
-    [Export(typeof(IPackageFeedFactory))]
-    [Name("Default NuGet v3 Service Feed Factory")]
     public class NuGetV3ServiceFeedFactory : IPackageFeedFactory
     {
         private readonly IWebRequestFactory _webRequestFactory;
 
-        [ImportingConstructor]
         public NuGetV3ServiceFeedFactory(IWebRequestFactory webRequestFactory)
         {
             _webRequestFactory = webRequestFactory;
@@ -33,7 +31,6 @@ namespace PackageFeedManager
             return false;
         }
     }
-
 
     public class NuGetV3ServiceFeed : IPackageFeed
     {
@@ -213,7 +210,7 @@ namespace PackageFeedManager
             string packageDisplayMetadataUriTemplateIdentifier = "PackageDisplayMetadataUriTemplate/3.0.0-rc";
             List<string> packageQuickInfoAddresses = await DiscoverEndpointsAsync(_feed, packageDisplayMetadataUriTemplateIdentifier, cancellationToken).ConfigureAwait(false);
 
-            if (packageQuickInfoAddresses.Count == 0)
+            if (packageQuickInfoAddresses == null || packageQuickInfoAddresses.Count == 0)
             {
                 return null;
             }

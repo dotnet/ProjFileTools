@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch
 {
 
     /// <summary>

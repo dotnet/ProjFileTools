@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using ProjectFileTools.NuGetSearch.Contracts;
+using ProjectFileTools.NuGetSearch.Feeds;
 
-namespace PackageFeedManager
+namespace ProjectFileTools.NuGetSearch.Search
 {
 
     internal class PackageNameSearchResult : IPackageNameSearchResult
