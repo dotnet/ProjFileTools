@@ -15,18 +15,20 @@ See the [change log](CHANGELOG.md) for changes and road map.
 
 ## Features
 
-- Feature 1
-- Feature 2
-  - Sub feature
+- Intellisense for NuGet package name and version
+- Hover tooltips
 
-### Feature 1
-Describe feature 1. Add screenshots/code samples etc.
+### Intellisenes
+Full Intellisense for NuGet package references is provided for both packages that are locally cached as well as packages defined in any feed - local and online.
 
-### Feature 2
-Describe feature 2. Add screenshots/code samples etc.
+![Tooltip](art/completion-name.png)
 
-#### Sub feature
-Describe sub feature. Add screenshots/code samples etc.
+![Tooltip](art/completion-version.png)
+
+### Hover tooltips
+Hovering over a package reference shows details about that package.
+
+![Tooltip](art/tooltip.png)
 
 ## Contribute
 Check out the [contribution guidelines](CONTRIBUTING.md)
