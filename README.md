@@ -9,7 +9,7 @@ or get the [CI build](http://vsixgallery.com/extension/ProjPackageIntellisense.M
 
 ---------------------------------------
 
-Empty VSIX Project.
+Provides Intellisense and other tooling for XML based project files such as .csproj and .vbproj files.
 
 See the [change log](CHANGELOG.md) for changes and road map.
 
