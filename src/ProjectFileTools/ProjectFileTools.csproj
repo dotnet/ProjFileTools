@@ -85,7 +85,9 @@
     </Compile>
     <Compile Include="ProjectFileToolsPackage.cs" />
     <Compile Include="QuickInfo\PackageQuickInfoProvider.cs" />
-    <Compile Include="source.extension.cs" />
+    <Compile Include="source.extension.cs">
+      <DependentUpon>source.extension.vsixmanifest</DependentUpon>
+    </Compile>
     <Compile Include="TextViewCreationListener.cs" />
     <Compile Include="WpfUtil.cs" />
     <Compile Update="PackageInfoControl.xaml.cs">
