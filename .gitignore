@@ -17,6 +17,11 @@ x64/
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 
+# NuGet restore
+*.nuget.props
+*.nuget.targets
+project.lock.json
+
 # NCrunch
 *.ncrunchsolution
 *.ncrunchproject
