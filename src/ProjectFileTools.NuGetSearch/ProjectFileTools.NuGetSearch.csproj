@@ -3,7 +3,6 @@
     <TargetFrameworks>net46;netstandard1.4</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
-    <Reference Include="Microsoft.VisualStudio.CoreUtility, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Net.Http" />
     <PackageReference Include="Newtonsoft.Json" Version="8.0.3" />
@@ -14,9 +13,6 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NuGet.Frameworks" Version="4.0.0-rc-2048" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
   </ItemGroup>
   <Target Name="BuiltProjectOutputGroup" />
   <Target Name="BuiltProjectOutputGroupDependencies" />
