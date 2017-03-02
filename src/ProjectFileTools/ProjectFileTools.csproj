@@ -68,11 +68,13 @@
     <Compile Include="Adornments\PackageReferenceGlyphTaggerProvider.cs" />
     <Compile Include="Completion\CompletionController.cs" />
     <Compile Include="Completion\CompletionTooltipElementProvider.cs" />
+    <Compile Include="Completion\PackageCompletion.cs" />
     <Compile Include="Completion\PackageCompletionSet.cs" />
     <Compile Include="Completion\PackageCompletionSource.cs" />
     <Compile Include="Completion\PackageCompletionSourceProvider.cs" />
     <Compile Include="Completion\PackageIntellisenseController.cs" />
     <Compile Include="Completion\PackageIntellisenseControllerProvider.cs" />
+    <Compile Include="Completion\VersionCompletion.cs" />
     <Compile Include="Exports\ExportedFileSystem.cs" />
     <Compile Include="Exports\ExportedNuGetDiskFeedFactory.cs" />
     <Compile Include="Exports\ExportedNuGetV3ServiceFeedFactory.cs" />
@@ -205,11 +207,14 @@
     <Error Condition="!Exists('..\..\packages\Microsoft.VSSDK.BuildTools.15.0.26201\build\Microsoft.VSSDK.BuildTools.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Microsoft.VSSDK.BuildTools.15.0.26201\build\Microsoft.VSSDK.BuildTools.targets'))" />
   </Target>
   <Import Project="..\..\packages\Microsoft.VSSDK.BuildTools.15.0.26201\build\Microsoft.VSSDK.BuildTools.targets" Condition="Exists('..\..\packages\Microsoft.VSSDK.BuildTools.15.0.26201\build\Microsoft.VSSDK.BuildTools.targets')" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
+  <Target Name="LinkVSSDKEmbeddableAssemblies" DependsOnTargets="ResolveReferences" AfterTargets="ResolveReferences">
+    <ItemGroup>
+      <ReferencePath Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(FileName)', '\.Interop\.'))">
+        <EmbedInteropTypes>true</EmbedInteropTypes>
+      </ReferencePath>
+      <ReferencePath Condition="'%(FileName)' == 'Microsoft.VisualStudio.Shell.Interop.8.0' OR '%(FileName)' == 'Microsoft.VisualStudio.Shell.Interop.9.0' OR '%(FileName)' == 'Microsoft.VisualStudio.TextManager.Interop.8.0'">
+        <EmbedInteropTypes>false</EmbedInteropTypes>
+      </ReferencePath>
+    </ItemGroup>
   </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

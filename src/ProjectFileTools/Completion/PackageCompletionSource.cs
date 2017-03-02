@@ -109,7 +109,7 @@ namespace ProjectFileTools.Completion
                 return false;
             }
 
-            if (element.Name != "PackageReference" && element.Name != "DotnetCliToolReference")
+            if (element.Name != "PackageReference" && element.Name != "DotNetCliToolReference")
             {
                 span = default(Span);
                 packageName = null;
@@ -157,7 +157,7 @@ namespace ProjectFileTools.Completion
             ITrackingPoint point = session.GetTriggerPoint(_textBuffer);
             int pos = point.GetPosition(snapshot);
 
-            if (_pos == pos && _currentSession != null)
+            if (_pos == pos && _currentSession != null && _currentCompletionSet != null)
             {
                 completionSets.Add(_currentCompletionSet);
                 return;
@@ -260,7 +260,7 @@ namespace ProjectFileTools.Completion
                 }
             }
 
-            foreach (KeyValuePair<string, FeedKind> entry in packageLookup)
+            foreach (KeyValuePair<string, FeedKind> entry in packageLookup.OrderBy(x => x.Key))
             {
                 ImageMoniker moniker = KnownMonikers.NuGet;
 
@@ -272,7 +272,7 @@ namespace ProjectFileTools.Completion
                         //TODO: Add different icons for MyGet/network/etc
                 }
 
-                completions.Add(new Completion4(entry.Key, entry.Key, entry.Key, moniker, entry.Key));
+                completions.Add(new PackageCompletion(entry.Key, entry.Key, entry.Key, moniker, entry.Key));
             }
 
             _currentCompletionSet.AccessibleCompletions.Clear();
@@ -314,7 +314,7 @@ namespace ProjectFileTools.Completion
                         //TODO: Add different icons for MyGet/network/etc
                 }
 
-                completions.Add(new Completion3(entry.Key, entry.Key, null, moniker, entry.Key));
+                completions.Add(new VersionCompletion(entry.Key, entry.Key, null, moniker, entry.Key));
             }
 
             _currentCompletionSet.AccessibleCompletions.Clear();

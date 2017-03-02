@@ -24,7 +24,7 @@ namespace ProjectFileTools.Adornments
             where T : ITag
         {
             IIntraTextAdornmentFactory<PackageGlyphTag> factory = new PackageGlyphTagFactory(_searchManager);
-            return IntraTextAdornmentTagger<PackageGlyphTag>.GetOrCreate(textView, textBuffer, factory, "DotnetCliToolReference") as ITagger<T>;
+            return IntraTextAdornmentTagger<PackageGlyphTag>.GetOrCreate(textView, textBuffer, factory, "DotNetCliToolReference") as ITagger<T>;
         }
     }
 }

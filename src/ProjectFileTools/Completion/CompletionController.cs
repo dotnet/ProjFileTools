@@ -73,7 +73,7 @@ namespace ProjectFileTools.Completion
                         case VSConstants.VSStd2KCmdID.TYPECHAR:
                             char ch = GetTypeChar(pvaIn);
 
-                            if (!char.IsPunctuation(ch) && !char.IsControl(ch))
+                            if (!char.IsControl(ch))
                             {
                                 StartSession();
                                 Filter();

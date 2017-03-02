@@ -21,7 +21,7 @@ namespace ProjectFileTools.Completion
 
         public UIElement GetUIElement(Microsoft.VisualStudio.Language.Intellisense.Completion itemToRender, ICompletionSession context, UIElementType elementType)
         {
-            if (elementType == UIElementType.Tooltip)
+            if (itemToRender is PackageCompletion && elementType == UIElementType.Tooltip)
             {
                 return new PackageInfoControl(itemToRender.DisplayText, null, null, _searcher);
             }
