@@ -1,28 +1,44 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26008.0
+VisualStudioVersion = 15.0.26228.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectFileTools", "src\ProjectFileTools\ProjectFileTools.csproj", "{4FE11F73-0836-4630-9B92-712D0482CFCB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectFileTools.NuGetSearch", "src\ProjectFileTools.NuGetSearch\ProjectFileTools.NuGetSearch.csproj", "{7129446A-7769-4753-9BF1-5E79CE1CB4C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectFileTools.NuGetSearch", "src\ProjectFileTools.NuGetSearch\ProjectFileTools.NuGetSearch.csproj", "{7129446A-7769-4753-9BF1-5E79CE1CB4C4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectFileTools.NuGetSearch.Tests", "test\ProjectFileTools.NuGetSearch.Tests\ProjectFileTools.NuGetSearch.Tests.csproj", "{BE6FCD51-F6DC-4E85-97E1-DEC914744398}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectFileTools.NuGetSearch.Tests", "test\ProjectFileTools.NuGetSearch.Tests\ProjectFileTools.NuGetSearch.Tests.csproj", "{BE6FCD51-F6DC-4E85-97E1-DEC914744398}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2EDA15B3-7D5D-4ACA-A053-8D281CE42B20}"
 	ProjectSection(SolutionItems) = preProject
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
+		build.cmd = build.cmd
 		CHANGELOG.md = CHANGELOG.md
+		Common.props = Common.props
 		CONTRIBUTING.md = CONTRIBUTING.md
 		ISSUE_TEMPLATE.md = ISSUE_TEMPLATE.md
 		LICENSE = LICENSE
+		NuGet.config = NuGet.config
 		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1479D323-9D5A-4D0C-84BE-8A7F9FC8BD8E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{55FC45A3-11F4-49F0-AEB4-F43145397E43}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{9AB88CF8-3AED-42E1-845B-97978A9A7A5C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Signing", "Signing", "{7A3C8AE5-1C1C-4087-B5E2-B61BC1970FDE}"
+	ProjectSection(SolutionItems) = preProject
+		build\Signing\Signing.props = build\Signing\Signing.props
+		build\Signing\SignToolConfig.json = build\Signing\SignToolConfig.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StrongNameKeys", "StrongNameKeys", "{01F0EC18-761B-4FEC-B9A0-39AB17167B58}"
+	ProjectSection(SolutionItems) = preProject
+		build\Strong Name Keys\35MSSharedLib1024.snk = build\Strong Name Keys\35MSSharedLib1024.snk
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,5 +66,7 @@ Global
 		{4FE11F73-0836-4630-9B92-712D0482CFCB} = {1479D323-9D5A-4D0C-84BE-8A7F9FC8BD8E}
 		{7129446A-7769-4753-9BF1-5E79CE1CB4C4} = {1479D323-9D5A-4D0C-84BE-8A7F9FC8BD8E}
 		{BE6FCD51-F6DC-4E85-97E1-DEC914744398} = {55FC45A3-11F4-49F0-AEB4-F43145397E43}
+		{7A3C8AE5-1C1C-4087-B5E2-B61BC1970FDE} = {9AB88CF8-3AED-42E1-845B-97978A9A7A5C}
+		{01F0EC18-761B-4FEC-B9A0-39AB17167B58} = {9AB88CF8-3AED-42E1-845B-97978A9A7A5C}
 	EndGlobalSection
 EndGlobal
