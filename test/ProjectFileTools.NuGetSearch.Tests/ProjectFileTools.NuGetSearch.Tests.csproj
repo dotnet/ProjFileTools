@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net46</TargetFrameworks>
+    <NonShipping>true</NonShipping>
   </PropertyGroup>
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'Common.props'))\Common.props" />
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
