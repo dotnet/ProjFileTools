@@ -14,6 +14,7 @@ set Solution=%Root%\ProjectFileTools.sln
 set OnlyRestore=false
 set SignType=public
 set OfficialBuild=false
+set VSTestAdditionalArguments=
 
 :ParseArguments
 if "%1" == "" goto :DoneParsing
@@ -27,6 +28,7 @@ if /I "%1" == "/no-deploy-extension" set DeployVsixExtension=false&&shift&& goto
 if /I "%1" == "/no-node-reuse" set NodeReuse=false&&shift&& goto :ParseArguments
 if /I "%1" == "/no-multi-proc" set MSBuildAdditionalArguments=&&shift&& goto :ParseArguments
 if /I "%1" == "/official-build" set SignType=real&&set OfficialBuild=true&&shift&& goto :ParseArguments
+if /I "%1" == "/trx-test-results" set VSTestAdditionalArguments=/logger:trx&&shift&&goto :ParseArguments
 call :Usage && exit /b 1
 :DoneParsing
 
@@ -88,7 +90,7 @@ if "%RunTests%" == "false" (
 
 echo.
 echo Running tests
-VSTest.Console.exe "bin\%BuildConfiguration%\ProjectFileTools.NuGetSearch.Tests.dll"
+VSTest.Console.exe "bin\%BuildConfiguration%\ProjectFileTools.NuGetSearch.Tests.dll" %VSTestAdditionalArguments%
 if ERRORLEVEL 1 (
     echo.
     call :PrintColor Red "Tests failed, see console output for failed tests"
@@ -137,6 +139,7 @@ echo                              useful for avoiding unexpected behavior on bui
 echo     /no-multi-proc           No multi-proc build, useful for diagnosing build logs
 echo     /no-deploy-extension     Does not deploy the VSIX extension when building the solution
 echo     /official-build          Run the full signed build.
+echo     /trx-test-results        Outputs MSTest logs in TRX format for test result archival
 goto :eof
 
 :BuildFailed
