@@ -228,20 +228,25 @@ namespace ProjectFileTools.Completion
 
             _currentCompletionSet = new PackageCompletionSet("PackageCompletion", "Package Completion", _textBuffer.CurrentSnapshot.CreateTrackingSpan(span, SpanTrackingMode.EdgeInclusive));
 
-            if (showLoading)
+            if (_nameSearchJob != null)
             {
-                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion("Loading..."));
+                ProduceNameCompletionSet();
             }
-            else
+            else if (_versionSearchJob != null)
             {
-                if (_nameSearchJob != null)
-                {
-                    ProduceNameCompletionSet();
-                }
-                else if (_versionSearchJob != null)
-                {
-                    ProduceVersionCompletionSet();
-                }
+                ProduceVersionCompletionSet();
+            }
+
+            //If we're not part of an existing session & the results have already been
+            //  finalized and those results assert that no packages match, show that
+            //  there is no such package/version
+            if (!session.CompletionSets.Any(x => x is PackageCompletionSet)
+                && ((_nameSearchJob != null && _nameSearchJob.RemainingFeeds.Count == 0)
+                    || (_versionSearchJob != null && _versionSearchJob.RemainingFeeds.Count == 0))
+                && _currentCompletionSet.Completions.Count == 0
+                )
+            {
+                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion("(No Results)"));
             }
 
             completionSets.Add(_currentCompletionSet);
@@ -276,16 +281,6 @@ namespace ProjectFileTools.Completion
             }
 
             _currentCompletionSet.AccessibleCompletions.Clear();
-
-            if (_nameSearchJob.RemainingFeeds.Count > 0)
-            {
-                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion($"Loading ({_nameSearchJob.RemainingFeeds.Count} remaining)..."));
-            }
-            else if (completions.Count == 0)
-            {
-                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion("(No Results)"));
-            }
-
             _currentCompletionSet.AccessibleCompletions.AddRange(completions);
         }
 
@@ -302,7 +297,7 @@ namespace ProjectFileTools.Completion
                 }
             }
 
-            foreach(KeyValuePair<string, FeedKind> entry in iconMap.OrderByDescending(x => SemanticVersion.Parse(x.Key)))
+            foreach (KeyValuePair<string, FeedKind> entry in iconMap.OrderByDescending(x => SemanticVersion.Parse(x.Key)))
             {
                 ImageMoniker moniker = KnownMonikers.NuGet;
 
@@ -318,16 +313,6 @@ namespace ProjectFileTools.Completion
             }
 
             _currentCompletionSet.AccessibleCompletions.Clear();
-
-            if (_versionSearchJob.RemainingFeeds.Count > 0)
-            {
-                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion($"Loading ({_versionSearchJob.RemainingFeeds.Count} remaining)..."));
-            }
-            else if (completions.Count == 0)
-            {
-                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion("(No Results)"));
-            }
-
             _currentCompletionSet.AccessibleCompletions.AddRange(completions);
         }
 
@@ -337,17 +322,23 @@ namespace ProjectFileTools.Completion
             {
                 string displayText = _currentCompletionSet.SelectionStatus?.Completion?.DisplayText;
 
+                if (_nameSearchJob != null)
+                {
+                    ProduceNameCompletionSet();
+                }
+                else if (_versionSearchJob != null)
+                {
+                    ProduceVersionCompletionSet();
+                }
+
+                if (!_currentSession.IsStarted && _currentCompletionSet.Completions.Count > 0)
+                {
+                    _currentSession = _completionBroker.CreateCompletionSession(_currentSession.TextView, _currentSession.GetTriggerPoint(_textBuffer), true);
+                    _currentSession.Start();
+                }
+
                 if (!_currentSession.IsDismissed)
                 {
-                    if (_nameSearchJob != null)
-                    {
-                        ProduceNameCompletionSet();
-                    }
-                    else if (_versionSearchJob != null)
-                    {
-                        ProduceVersionCompletionSet();
-                    }
-
                     _currentSession.Filter();
 
                     if (displayText != null)
