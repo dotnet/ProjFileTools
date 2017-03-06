@@ -2,7 +2,6 @@
 // Jenkins DSL: https://github.com/jenkinsci/job-dsl-plugin/wiki
 
 import jobs.generation.ArchivalSettings
-import jobs.generation.InternalUtilities
 import jobs.generation.Utilities
 
 def project = GithubProject
@@ -31,9 +30,9 @@ build.cmd /no-deploy-extension /${configuration.toLowerCase()} /no-node-reuse /t
         archiveSettings.setFailIfNothingArchived()
         archiveSettings.setArchiveOnFailure()
         Utilities.addArchival(newJob, archiveSettings)
-        Utilities.setMachineAffinity(newJob, 'Windows_NT', 'latest-or-auto-dev15-internal')
+        Utilities.setMachineAffinity(newJob, 'Windows_NT', 'latest-or-auto-dev15')
         Utilities.addMSTestResults(newJob, "TestResults/*.trx")
-        InternalUtilities.standardJobSetup(newJob, project, isPr, "*/$branchName")
+        Utilities.standardJobSetup(newJob, project, isPr, "*/$branchName")
         if (isPr) {
             Utilities.addGithubPRTriggerForBranch(newJob, branchName, "Windows ${configuration}")
         } else {
