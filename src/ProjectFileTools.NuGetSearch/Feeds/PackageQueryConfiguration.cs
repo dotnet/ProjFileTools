@@ -4,7 +4,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds
 {
     public class PackageQueryConfiguration : IPackageQueryConfiguration
     {
-        public PackageQueryConfiguration(string targetFrameworkMoniker, bool includePreRelease = false, int maxResults = 100)
+        public PackageQueryConfiguration(string targetFrameworkMoniker, bool includePreRelease = true, int maxResults = 100)
         {
             CompatibiltyTarget = targetFrameworkMoniker;
             IncludePreRelease = includePreRelease;
