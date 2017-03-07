@@ -30,7 +30,7 @@ namespace ProjectFileTools.NuGetSearch.Search
 
             public PackageNameQuery(string prefix, string tfm)
             {
-                _hashCode = (prefix?.GetHashCode() ?? 0) ^ (tfm?.GetHashCode() ?? 0);
+                _hashCode = StringComparer.OrdinalIgnoreCase.GetHashCode(prefix ?? "") ^ (tfm?.GetHashCode() ?? 0);
                 _prefix = prefix;
             }
 
@@ -54,7 +54,7 @@ namespace ProjectFileTools.NuGetSearch.Search
 
             public PackageVersionQuery(string packageName, string tfm)
             {
-                _hashCode = (packageName?.GetHashCode() ?? 0) ^ (tfm?.GetHashCode() ?? 0);
+                _hashCode = StringComparer.OrdinalIgnoreCase.GetHashCode(packageName ?? "") ^ (tfm?.GetHashCode() ?? 0);
                 _packageName = packageName;
             }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio;
@@ -113,12 +114,13 @@ namespace ProjectFileTools.Completion
                 }
             }
 
-            _currentSession.Dismiss();
-            _currentSession = null;
-            StartSession();
-
             if (_currentSession != null)
             {
+                if (_currentSession.TextView.TextBuffer.Properties.TryGetProperty(typeof(PackageCompletionSource), out ICompletionSource src))
+                {
+                    src.AugmentCompletionSession(_currentSession, new List<CompletionSet>());
+                }
+
                 _currentSession.Filter();
             }
         }

@@ -10,9 +10,12 @@ namespace ProjectFileTools.NuGetSearch.IO
         {
             try
             {
-                HttpClient client = new HttpClient();
-                string response = await client.GetStringAsync(endpoint).ConfigureAwait(false);
-                return response;
+                using (HttpClient client = new HttpClient())
+                {
+                    HttpResponseMessage responseMessage = await client.GetAsync(endpoint, cancellationToken).ConfigureAwait(false);
+                    responseMessage.EnsureSuccessStatusCode();
+                    return await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
+                }
             }
             catch
             {

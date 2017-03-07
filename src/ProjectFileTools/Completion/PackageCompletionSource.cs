@@ -27,6 +27,7 @@ namespace ProjectFileTools.Completion
         private PackageCompletionSet _currentCompletionSet;
         private int _pos;
         private readonly IClassifier _classifier;
+        private bool _isSelfTrigger;
 
         public PackageCompletionSource(ITextBuffer textBuffer, ICompletionBroker completionBroker, IClassifierAggregatorService classifier, IPackageSearchManager searchManager)
         {
@@ -34,6 +35,7 @@ namespace ProjectFileTools.Completion
             _searchManager = searchManager;
             _textBuffer = textBuffer;
             _completionBroker = completionBroker;
+            textBuffer.Properties.AddProperty(typeof(PackageCompletionSource), this);
         }
 
         public static bool IsInRangeForPackageCompletion(ITextSnapshot snapshot, int pos, out Span span, out string packageName, out string packageVersion, out string completionType)
@@ -157,12 +159,6 @@ namespace ProjectFileTools.Completion
             ITrackingPoint point = session.GetTriggerPoint(_textBuffer);
             int pos = point.GetPosition(snapshot);
 
-            if (_pos == pos && _currentSession != null && _currentCompletionSet != null)
-            {
-                completionSets.Add(_currentCompletionSet);
-                return;
-            }
-
             if (_classifier.GetClassificationSpans(new SnapshotSpan(snapshot, new Span(pos, 1))).Any(x => (x.ClassificationType.Classification?.IndexOf("comment", StringComparison.OrdinalIgnoreCase) ?? -1) > -1))
             {
                 return;
@@ -175,6 +171,17 @@ namespace ProjectFileTools.Completion
                 _versionSearchJob?.Cancel();
                 _nameSearchJob = null;
                 _versionSearchJob = null;
+                return;
+            }
+
+            if (_isSelfTrigger)
+            {
+                _isSelfTrigger = false;
+                if(_currentCompletionSet != null)
+                {
+                    completionSets.Add(_currentCompletionSet);
+                }
+
                 return;
             }
 
@@ -226,7 +233,13 @@ namespace ProjectFileTools.Completion
                     break;
             }
 
-            _currentCompletionSet = new PackageCompletionSet("PackageCompletion", "Package Completion", _textBuffer.CurrentSnapshot.CreateTrackingSpan(span, SpanTrackingMode.EdgeInclusive));
+            _currentCompletionSet = _currentSession.CompletionSets.FirstOrDefault(x => x is PackageCompletionSet) as PackageCompletionSet;
+
+            bool newCompletionSet = _currentCompletionSet == null;
+            if (newCompletionSet)
+            {
+                _currentCompletionSet = new PackageCompletionSet("PackageCompletion", "Package Completion", _textBuffer.CurrentSnapshot.CreateTrackingSpan(span, SpanTrackingMode.EdgeInclusive));
+            }
 
             if (_nameSearchJob != null)
             {
@@ -240,16 +253,17 @@ namespace ProjectFileTools.Completion
             //If we're not part of an existing session & the results have already been
             //  finalized and those results assert that no packages match, show that
             //  there is no such package/version
-            if (!session.CompletionSets.Any(x => x is PackageCompletionSet)
-                && ((_nameSearchJob != null && _nameSearchJob.RemainingFeeds.Count == 0)
-                    || (_versionSearchJob != null && _versionSearchJob.RemainingFeeds.Count == 0))
-                && _currentCompletionSet.Completions.Count == 0
-                )
+            if (!session.CompletionSets.Any(x => x is PackageCompletionSet))
             {
-                _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion("(No Results)"));
-            }
+                if (((_nameSearchJob != null && _nameSearchJob.RemainingFeeds.Count == 0)
+                    || (_versionSearchJob != null && _versionSearchJob.RemainingFeeds.Count == 0))
+                    && _currentCompletionSet.Completions.Count == 0)
+                {
+                    _currentCompletionSet.AccessibleCompletions.Add(new Microsoft.VisualStudio.Language.Intellisense.Completion("(No Results)"));
+                }
 
-            completionSets.Add(_currentCompletionSet);
+                completionSets.Add(_currentCompletionSet);
+            }
         }
 
         private void ProduceNameCompletionSet()
@@ -333,6 +347,7 @@ namespace ProjectFileTools.Completion
 
                 if (!_currentSession.IsStarted && _currentCompletionSet.Completions.Count > 0)
                 {
+                    _isSelfTrigger = true;
                     _currentSession = _completionBroker.CreateCompletionSession(_currentSession.TextView, _currentSession.GetTriggerPoint(_textBuffer), true);
                     _currentSession.Start();
                 }
