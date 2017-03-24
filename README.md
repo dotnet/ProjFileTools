@@ -4,8 +4,7 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/hv6uyc059rqbc6fj?svg=true)](https://ci.appveyor.com/project/madskristensen/extensibilitytools)
 
 <!-- Update the VS Gallery link after you upload the VSIX-->
-Download this extension from the [VS Gallery](https://visualstudiogallery.msdn.microsoft.com/[GuidFromGallery])
-or get the [CI build](http://vsixgallery.com/extension/ProjPackageIntellisense.Mike Lorbetske.e22f3d7e-6b01-4ef8-b3cb-ea293a87b00f/).
+Download this extension from the [VS Gallery](https://aka.ms/projfiletools).
 
 ---------------------------------------
 
