@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Threading;
 using System.Xml.Linq;
@@ -334,42 +335,54 @@ namespace ProjectFileTools.Completion
         {
             ThreadHelper.Generic.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
             {
-                string displayText = _currentCompletionSet.SelectionStatus?.Completion?.DisplayText;
-
-                if (_nameSearchJob != null)
+                try
                 {
-                    ProduceNameCompletionSet();
-                }
-                else if (_versionSearchJob != null)
-                {
-                    ProduceVersionCompletionSet();
-                }
-
-                if (!_currentSession.IsStarted && _currentCompletionSet.Completions.Count > 0)
-                {
-                    _isSelfTrigger = true;
-                    _currentSession = _completionBroker.CreateCompletionSession(_currentSession.TextView, _currentSession.GetTriggerPoint(_textBuffer), true);
-                    _currentSession.Start();
-                }
-
-                if (!_currentSession.IsDismissed)
-                {
-                    _currentSession.Filter();
-
-                    if (displayText != null)
+                    if (_currentCompletionSet == null || _currentSession == null)
                     {
-                        foreach (Microsoft.VisualStudio.Language.Intellisense.Completion completion in _currentSession.SelectedCompletionSet.Completions)
-                        {
-                            if (completion.DisplayText == displayText)
-                            {
-                                _currentCompletionSet.SelectionStatus = new CompletionSelectionStatus(completion, true, true);
-                                break;
-                            }
-                        }
+                        return;
                     }
 
-                    //_currentSession.Dismiss();
-                    //_currentSession = _completionBroker.TriggerCompletion(_currentSession.TextView);
+                    string displayText = _currentCompletionSet?.SelectionStatus?.Completion?.DisplayText;
+
+                    if (_nameSearchJob != null)
+                    {
+                        ProduceNameCompletionSet();
+                    }
+                    else if (_versionSearchJob != null)
+                    {
+                        ProduceVersionCompletionSet();
+                    }
+
+                    if (!_currentSession.IsStarted && _currentCompletionSet.Completions.Count > 0)
+                    {
+                        _isSelfTrigger = true;
+                        _currentSession = _completionBroker.CreateCompletionSession(_currentSession.TextView, _currentSession.GetTriggerPoint(_textBuffer), true);
+                        _currentSession.Start();
+                    }
+
+                    if (!_currentSession.IsDismissed)
+                    {
+                        _currentSession.Filter();
+
+                        if (displayText != null)
+                        {
+                            foreach (Microsoft.VisualStudio.Language.Intellisense.Completion completion in _currentSession.SelectedCompletionSet.Completions)
+                            {
+                                if (completion.DisplayText == displayText)
+                                {
+                                    _currentCompletionSet.SelectionStatus = new CompletionSelectionStatus(completion, true, true);
+                                    break;
+                                }
+                            }
+                        }
+
+                        //_currentSession.Dismiss();
+                        //_currentSession = _completionBroker.TriggerCompletion(_currentSession.TextView);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex.ToString());
                 }
             });
         }
