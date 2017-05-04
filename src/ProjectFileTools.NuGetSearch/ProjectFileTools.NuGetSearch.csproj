@@ -2,6 +2,13 @@
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'Common.props'))\Common.props" />
   <PropertyGroup>
     <TargetFrameworks>net46;netstandard1.4</TargetFrameworks>
+    <Description>Helper package for querying NuGet feeds for intellisense in project files</Description>
+    <Authors>Microsoft</Authors>
+    <ProjectUrl>https://github.com/dotnet/projfiletools</ProjectUrl>
+    <LicenseUrl>https://www.microsoft.com/web/webpi/eula/net_library_eula_enu.htm</LicenseUrl>
+    <ImageUrl>http://go.microsoft.com/fwlink/?LinkID=288859</ImageUrl>
+    <Company>Microsoft</Company>
+    <Copyright>Copyright © Microsoft Corporation</Copyright>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
     <Reference Include="System.ComponentModel.Composition" />

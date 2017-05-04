@@ -8,8 +8,12 @@
     <OutDir>$(OutputPath)</OutDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net46'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net46' AND '$(BuildForPack)' == ''">
     <OutDir>$(OutputPath)</OutDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net46' AND '$(BuildForPack)' != ''">
+    <OutDir>$(OutputPath)\net46</OutDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.4'">
