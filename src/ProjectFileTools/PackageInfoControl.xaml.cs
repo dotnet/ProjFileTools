@@ -23,6 +23,7 @@ namespace ProjectFileTools
         public PackageInfoControl(string packageId, string version, string tfm, IPackageSearchManager searcher)
         {
             InitializeComponent();
+            this.ShouldBeThemed();
             PackageId.Content = packageId;
             Glyph.Source = WpfUtil.MonikerToBitmap(KnownMonikers.NuGet, 32);
             Glyph.ImageFailed += OnImageFailed;
