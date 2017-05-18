@@ -6,7 +6,8 @@
     <StartAction>Program</StartAction>
     <StartProgram>$(DevEnvDir)\devenv.exe</StartProgram>
     <StartArguments>/rootsuffix Exp</StartArguments>
-    <NuGetPackageImportStamp></NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
     <UseCodebase>true</UseCodebase>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
@@ -53,6 +54,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Compile Include="Adornments\DotnetCliToolReferenceGlyphTaggerProvider.cs" />
+    <Compile Include="Adornments\HighlightWordFormatDefinition.cs" />
+    <Compile Include="Adornments\HighlightWordTag.cs" />
+    <Compile Include="Adornments\HighlightWordTagger.cs" />
+    <Compile Include="Adornments\HighlightWordTaggerProvider.cs" />
     <Compile Include="Adornments\IIntraTextAdornmentFactory.cs" />
     <Compile Include="Adornments\IntraTextAdornmentTagger.cs" />
     <Compile Include="Adornments\PackageGlyphTag.cs" />
