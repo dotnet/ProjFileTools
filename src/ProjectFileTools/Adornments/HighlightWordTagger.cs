@@ -1,14 +1,16 @@
-﻿using Microsoft.VisualStudio.Text.Tagging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
+using Microsoft.VisualStudio.Text.Tagging;
 
 namespace ProjectFileTools.Adornments
 {
-    // Finds and updates the correct tags for the highlighted text.
+    /// <summary>
+    /// Finds and updates the correct tags for the highlighted text.
+    /// </summary>
     internal class HighlightWordTagger : ITagger<HighlightWordTag>
     {
         ITextView View { get; set; }
@@ -17,10 +19,14 @@ namespace ProjectFileTools.Adornments
 
         ITextSearchService TextSearchService { get; set; }
 
-        // Contains Snapshots for each string that matches the highlighted text
+        /// <summary>
+        /// Contains Snapshots for each string that matches the highlighted text
+        /// </summary>
         NormalizedSnapshotSpanCollection WordSpans { get; set; }
 
-        // Last highlighted text
+        /// <summary>
+        /// Last highlighted text
+        /// </summary>
         string CurrentWord { get; set; }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -74,7 +80,6 @@ namespace ProjectFileTools.Adornments
             {
                 yield return new TagSpan<HighlightWordTag>(span, new HighlightWordTag());
             }
-
         }
     }
 }

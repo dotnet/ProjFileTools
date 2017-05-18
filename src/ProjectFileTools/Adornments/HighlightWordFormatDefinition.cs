@@ -1,11 +1,13 @@
-﻿using Microsoft.VisualStudio.Text.Classification;
-using Microsoft.VisualStudio.Utilities;
-using System.ComponentModel.Composition;
+﻿using System.ComponentModel.Composition;
 using System.Windows.Media;
+using Microsoft.VisualStudio.Text.Classification;
+using Microsoft.VisualStudio.Utilities;
 
 namespace ProjectFileTools.Adornments
 {
-    // Used by HighLightWordTag to get the acquired tags' background color.
+    /// <summary>
+    /// Used by HighLightWordTag to get the acquired tags' background color.
+    /// </summary>
     [Export(typeof(EditorFormatDefinition))]
     [Name("MarkerFormatDefinition/HighlightWordFormatDefinition")]
     internal class HighlightWordFormatDefinition : MarkerFormatDefinition
