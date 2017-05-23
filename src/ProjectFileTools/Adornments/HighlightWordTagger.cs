@@ -13,43 +13,46 @@ namespace ProjectFileTools.Adornments
     /// </summary>
     internal class HighlightWordTagger : ITagger<HighlightWordTag>
     {
-        ITextView View { get; set; }
+        private readonly ITextView _view;
 
-        ITextBuffer SourceBuffer { get; set; }
+        private readonly ITextBuffer _sourceBuffer;
 
-        ITextSearchService TextSearchService { get; set; }
+        private readonly ITextSearchService _textSearchService;
 
         /// <summary>
         /// Contains Snapshots for each string that matches the highlighted text
         /// </summary>
-        NormalizedSnapshotSpanCollection WordSpans { get; set; }
+        private NormalizedSnapshotSpanCollection _wordSpans;
 
         /// <summary>
         /// Last highlighted text
         /// </summary>
-        string CurrentWord { get; set; }
+        private string _currentWord;
+
+        private readonly HighlightWordTag _highlightWordTag;
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
         public HighlightWordTagger(ITextView view, ITextBuffer sourceBuffer, ITextSearchService textSearchService)
         {
-            this.View = view;
-            this.SourceBuffer = sourceBuffer;
-            this.TextSearchService = textSearchService;
-            this.WordSpans = new NormalizedSnapshotSpanCollection();
-            this.CurrentWord = "";
-            this.View.Selection.SelectionChanged += ViewSelectionChanged;
+            _view = view;
+            _sourceBuffer = sourceBuffer;
+            _textSearchService = textSearchService;
+            _wordSpans = new NormalizedSnapshotSpanCollection();
+            _currentWord = "";
+            _highlightWordTag = new HighlightWordTag();
+            _view.Selection.SelectionChanged += ViewSelectionChanged;
         }
 
         private void ViewSelectionChanged(object sender, EventArgs e)
         {
-            UpdateWordAdornnents(this.View.Selection.StreamSelectionSpan.GetText());
+            UpdateWordAdornnents(_view.Selection.StreamSelectionSpan.GetText());
         }
 
         private void UpdateWordAdornnents(string newSelection)
         {
             // If the new string is equal to the old one, we do not need to update the tags.
-            if (this.CurrentWord.Equals(newSelection))
+            if (_currentWord.Equals(newSelection))
             {
                 return;
             }
@@ -57,28 +60,31 @@ namespace ProjectFileTools.Adornments
             List<SnapshotSpan> wordSpans = new List<SnapshotSpan>();
 
             // If the user only selected whitespace, do not create any snapshots.
-            if (newSelection.Any((c => !char.IsWhiteSpace(c))))
+            if (!newSelection.All(char.IsWhiteSpace))
             {
                 // Finds exact matches (does not match with substrings of words).
-                FindData findData = new FindData(newSelection, this.View.TextSnapshot);
-                findData.FindOptions = FindOptions.WholeWord | FindOptions.MatchCase;
-                wordSpans.AddRange(TextSearchService.FindAll(findData));
-            } 
-            this.Update(new NormalizedSnapshotSpanCollection(wordSpans), newSelection);
+                FindData findData = new FindData(newSelection, _view.TextSnapshot)
+                {
+                    FindOptions = FindOptions.WholeWord | FindOptions.MatchCase
+                };
+                wordSpans.AddRange(_textSearchService.FindAll(findData));
+            }
+
+            _wordSpans = new NormalizedSnapshotSpanCollection(wordSpans);
+            Update(newSelection);
         }
 
-        private void Update(NormalizedSnapshotSpanCollection normalizedSnapshotSpanCollection, string currentWord)
+        private void Update(string currentWord)
         {
-            this.WordSpans = normalizedSnapshotSpanCollection;
-            this.CurrentWord = currentWord;
-            TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(SourceBuffer.CurrentSnapshot, 0, SourceBuffer.CurrentSnapshot.Length)));
+            _currentWord = currentWord;
+            TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(_sourceBuffer.CurrentSnapshot, 0, _sourceBuffer.CurrentSnapshot.Length)));
         }
 
         public IEnumerable<ITagSpan<HighlightWordTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
-            foreach (SnapshotSpan span in WordSpans)
+            foreach (SnapshotSpan span in _wordSpans)
             {
-                yield return new TagSpan<HighlightWordTag>(span, new HighlightWordTag());
+                yield return new TagSpan<HighlightWordTag>(span, _highlightWordTag);
             }
         }
     }

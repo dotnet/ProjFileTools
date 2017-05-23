@@ -23,7 +23,8 @@ namespace ProjectFileTools.Adornments
 
         internal ITextSearchService TextSearchService { get; }
 
-        public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
+        public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) 
+            where T : ITag
         {
             if (textView.TextBuffer != buffer)
             {
