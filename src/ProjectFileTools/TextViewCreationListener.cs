@@ -45,7 +45,6 @@ namespace ProjectFileTools
             GotoDefinitionController gotoDefinition = new GotoDefinitionController(view, _workspaceManager);
             textViewAdapter.AddCommandFilter(gotoDefinition, out IOleCommandTarget gotoDefinitionNext);
             gotoDefinition.Next = gotoDefinitionNext;
-
         }
     }
 }

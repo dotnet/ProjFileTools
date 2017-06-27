@@ -32,7 +32,6 @@ namespace ProjectFileTools.MSBuild
             {
                 _project = null;
             }
-
         }
 
         public string ResolveDefinition(string filePath, string sourceText, int position)
@@ -110,7 +109,6 @@ namespace ProjectFileTools.MSBuild
                 watcher.Renamed -= MarkReload;
                 watcher.Dispose();
             }
-
             _watchers.Clear();
 
             foreach (ResolvedImport import in _project.Imports)
