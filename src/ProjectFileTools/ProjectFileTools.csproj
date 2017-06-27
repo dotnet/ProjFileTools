@@ -74,11 +74,13 @@
     <Compile Include="Completion\PackageIntellisenseControllerProvider.cs" />
     <Compile Include="Completion\VersionCompletion.cs" />
     <Compile Include="Exports\ExportedFileSystem.cs" />
+    <Compile Include="Exports\ExportedMSBuildWorkspaceManager.cs" />
     <Compile Include="Exports\ExportedNuGetDiskFeedFactory.cs" />
     <Compile Include="Exports\ExportedNuGetV3ServiceFeedFactory.cs" />
     <Compile Include="Exports\ExportedPackageFeedFactorySelector.cs" />
     <Compile Include="Exports\ExportedPackageSearchManager.cs" />
     <Compile Include="Exports\ExportedWebRequestFactory.cs" />
+    <Compile Include="GoToDefinition\GoToDefinitionController.cs" />
     <Compile Include="PackageFeedRegistryProvider.cs" />
     <Compile Include="PackageInfoControl.xaml.cs">
       <DependentUpon>PackageInfoControl.xaml</DependentUpon>
@@ -142,14 +144,32 @@
     <Reference Include="Microsoft.VisualStudio.Language.Intellisense, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ProjectFileTools.MSBuild\ProjectFileTools.MSBuild.csproj">
+      <Project>{C2C10E1F-A307-49FC-9D9A-106FCBE88B91}</Project>
+      <Name>ProjectFileTools.MSBuild</Name>
+      <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
+      <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
+    </ProjectReference>
     <ProjectReference Include="..\ProjectFileTools.NuGetSearch\ProjectFileTools.NuGetSearch.csproj">
       <Project>{7129446a-7769-4753-9bf1-5e79ce1cb4c4}</Project>
       <Name>ProjectFileTools.NuGetSearch</Name>
       <IncludeOutputGroupsInVSIX>BuiltProjectOutputGroup%3bBuiltProjectOutputGroupDependencies%3bGetCopyToOutputDirectoryItems%3bSatelliteDllsProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
       <IncludeOutputGroupsInVSIXLocalOnly>DebugSymbolsProjectOutputGroup%3b</IncludeOutputGroupsInVSIXLocalOnly>
     </ProjectReference>
+    <Content Include="$(OutDir)Microsoft.Language.Xml.dll">
+      <CopyToOutputDirectory>CopyIfNewer</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <Link>Microsoft.Language.Xml.dll</Link>
+      <Visible>false</Visible>
+    </Content>
   </ItemGroup>
   <ItemGroup>
+<!--
+    <Content Include="Microsoft.Language.Xml.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+-->
     <Content Include="Resources\Icon.png">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>

@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using ProjectFileTools.Completion;
+using ProjectFileTools.MSBuild;
 
 namespace ProjectFileTools
 {
@@ -17,6 +18,7 @@ namespace ProjectFileTools
     {
         private readonly IVsEditorAdaptersFactoryService _adaptersFactory;
         private readonly ICompletionBroker _completionBroker;
+        private readonly MSBuildWorkspaceManager _workspaceManager;
 
         [Export(typeof(AdornmentLayerDefinition))]
         [Name("TextAdornment")]
@@ -24,10 +26,11 @@ namespace ProjectFileTools
         private AdornmentLayerDefinition editorAdornmentLayer;
 
         [ImportingConstructor]
-        public TextViewCreationListener(ICompletionBroker completionBroker, IVsEditorAdaptersFactoryService adaptersFactory)
+        public TextViewCreationListener(ICompletionBroker completionBroker, IVsEditorAdaptersFactoryService adaptersFactory, MSBuildWorkspaceManager workspaceManager)
         {
             _completionBroker = completionBroker;
             _adaptersFactory = adaptersFactory;
+            _workspaceManager = workspaceManager;
         }
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)
@@ -37,6 +40,12 @@ namespace ProjectFileTools
             CompletionController completion = new CompletionController(view, _completionBroker);
             textViewAdapter.AddCommandFilter(completion, out IOleCommandTarget completionNext);
             completion.Next = completionNext;
+
+            // Command Filter for GoToDefinition in .csproj files
+            GotoDefinitionController gotoDefinition = new GotoDefinitionController(view, _workspaceManager);
+            textViewAdapter.AddCommandFilter(gotoDefinition, out IOleCommandTarget gotoDefinitionNext);
+            gotoDefinition.Next = gotoDefinitionNext;
+
         }
     }
 }
