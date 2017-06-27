@@ -164,12 +164,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-<!--
-    <Content Include="Microsoft.Language.Xml.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      <IncludeInVSIX>true</IncludeInVSIX>
-    </Content>
--->
     <Content Include="Resources\Icon.png">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
