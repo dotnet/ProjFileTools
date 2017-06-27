@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.0
+VisualStudioVersion = 15.0.26606.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectFileTools", "src\ProjectFileTools\ProjectFileTools.csproj", "{4FE11F73-0836-4630-9B92-712D0482CFCB}"
 EndProject
@@ -40,6 +40,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StrongNameKeys", "StrongNam
 		build\Strong Name Keys\35MSSharedLib1024.snk = build\Strong Name Keys\35MSSharedLib1024.snk
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectFileTools.MSBuild", "src\ProjectFileTools.MSBuild\ProjectFileTools.MSBuild.csproj", "{C2C10E1F-A307-49FC-9D9A-106FCBE88B91}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +60,10 @@ Global
 		{BE6FCD51-F6DC-4E85-97E1-DEC914744398}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE6FCD51-F6DC-4E85-97E1-DEC914744398}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BE6FCD51-F6DC-4E85-97E1-DEC914744398}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2C10E1F-A307-49FC-9D9A-106FCBE88B91}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2C10E1F-A307-49FC-9D9A-106FCBE88B91}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2C10E1F-A307-49FC-9D9A-106FCBE88B91}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2C10E1F-A307-49FC-9D9A-106FCBE88B91}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -68,5 +74,6 @@ Global
 		{BE6FCD51-F6DC-4E85-97E1-DEC914744398} = {55FC45A3-11F4-49F0-AEB4-F43145397E43}
 		{7A3C8AE5-1C1C-4087-B5E2-B61BC1970FDE} = {9AB88CF8-3AED-42E1-845B-97978A9A7A5C}
 		{01F0EC18-761B-4FEC-B9A0-39AB17167B58} = {9AB88CF8-3AED-42E1-845B-97978A9A7A5C}
+		{C2C10E1F-A307-49FC-9D9A-106FCBE88B91} = {1479D323-9D5A-4D0C-84BE-8A7F9FC8BD8E}
 	EndGlobalSection
 EndGlobal

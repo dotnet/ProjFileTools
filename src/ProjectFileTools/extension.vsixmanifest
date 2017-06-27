@@ -13,6 +13,7 @@
   <Assets>
     <Asset Type="Microsoft.VisualStudio.VsPackage" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
     <Asset Type="Microsoft.VisualStudio.MefComponent" Path="|ProjectFileTools.NuGetSearch|" />
+    <Asset Type="Microsoft.VisualStudio.MefComponent" Path="|ProjectFileTools.MSBuild|" />
     <Asset Type="Microsoft.VisualStudio.MefComponent" Path="ProjectFileTools.dll" />
   </Assets>
   <Prerequisites>
