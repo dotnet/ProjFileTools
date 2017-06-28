@@ -18,7 +18,7 @@ namespace ProjectFileTools
     {
         private readonly IVsEditorAdaptersFactoryService _adaptersFactory;
         private readonly ICompletionBroker _completionBroker;
-        private readonly MSBuildWorkspaceManager _workspaceManager;
+        private readonly WorkspaceManager _workspaceManager;
 
         [Export(typeof(AdornmentLayerDefinition))]
         [Name("TextAdornment")]
@@ -26,7 +26,7 @@ namespace ProjectFileTools
         private AdornmentLayerDefinition editorAdornmentLayer;
 
         [ImportingConstructor]
-        public TextViewCreationListener(ICompletionBroker completionBroker, IVsEditorAdaptersFactoryService adaptersFactory, MSBuildWorkspaceManager workspaceManager)
+        public TextViewCreationListener(ICompletionBroker completionBroker, IVsEditorAdaptersFactoryService adaptersFactory, WorkspaceManager workspaceManager)
         {
             _completionBroker = completionBroker;
             _adaptersFactory = adaptersFactory;

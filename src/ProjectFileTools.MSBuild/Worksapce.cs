@@ -7,7 +7,10 @@ using Microsoft.Language.Xml;
 
 namespace ProjectFileTools.MSBuild
 {
-    public class MSBuildWorkspace
+    /// <summary>
+    /// Contains an MSBuild project and logic to extract information from it
+    /// </summary>
+    public class Workspace
     {
         private ProjectCollection _collection;
         private Project _project;
@@ -15,7 +18,7 @@ namespace ProjectFileTools.MSBuild
         private List<FileSystemWatcher> _watchers;
         private bool _needsReload;
 
-        internal MSBuildWorkspace(string filePath)
+        internal Workspace(string filePath)
         {
             _collection = new ProjectCollection();
             _containedFiles = new HashSet<string>();
@@ -34,6 +37,13 @@ namespace ProjectFileTools.MSBuild
             }
         }
 
+        /// <summary>
+        /// Returns the URL of the file that contains the definition of the item at the current position 
+        /// </summary>
+        /// <param name="filePath">Current file</param>
+        /// <param name="sourceText">Text in the current file</param>
+        /// <param name="position">Position of item that is to be resolved</param>
+        /// <returns></returns>
         public string ResolveDefinition(string filePath, string sourceText, int position)
         {
             String file = null;
@@ -68,7 +78,7 @@ namespace ProjectFileTools.MSBuild
                 return file;
         }
 
-        public bool ContainsProject(string filePath)
+        internal bool ContainsProject(string filePath)
         {
             ReloadIfNescessary();
             return _containedFiles.Contains(filePath);

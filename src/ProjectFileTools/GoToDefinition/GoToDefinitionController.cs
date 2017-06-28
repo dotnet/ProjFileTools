@@ -12,9 +12,9 @@ namespace ProjectFileTools
     internal class GotoDefinitionController : IOleCommandTarget
     {
         private readonly Guid _vSStd97CmdIDGuid;
-        private readonly MSBuildWorkspaceManager _workspaceManager;
+        private readonly WorkspaceManager _workspaceManager;
 
-        internal GotoDefinitionController(IWpfTextView textview, MSBuildWorkspaceManager workspaceManager)
+        internal GotoDefinitionController(IWpfTextView textview, WorkspaceManager workspaceManager)
         {
             TextView = textview;
             _vSStd97CmdIDGuid = new Guid("5EFC7975-14BC-11CF-9B2B-00AA00573819");
@@ -45,7 +45,7 @@ namespace ProjectFileTools
                 if (nCmdID == (uint)VSConstants.VSStd97CmdID.GotoDefn)
                 {
                     TextView.TextBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out ITextDocument textDoc);
-                    MSBuildWorkspace workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
+                    Workspace workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
                     string importedPath = workspace.ResolveDefinition(textDoc.FilePath, TextView.TextSnapshot.GetText(), TextView.Caret.Position.BufferPosition.Position);
 
                     if (importedPath != null)

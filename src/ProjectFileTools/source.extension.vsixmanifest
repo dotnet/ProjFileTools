@@ -20,7 +20,6 @@
     <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%.NuGetSearch" Path="|ProjectFileTools.NuGetSearch|" />
     <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%.MSBuild" Path="|ProjectFileTools.MSBuild|" />
     <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%|" />
-    <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="File" Path="Microsoft.Language.Xml.dll" AssemblyName="Microsoft.Language.Xml, Version=1.0.0.0, Culture=neutral, PublicKeyToken=d8943316a876e00f" />
   </Assets>
   <Prerequisites>
     <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,16.0)" DisplayName="Visual Studio core editor" />

@@ -4,9 +4,9 @@ using ProjectFileTools.MSBuild;
 
 namespace ProjectFileTools.Exports
 {
-    [Export(typeof(MSBuildWorkspaceManager))]
-    [Name("Default MSBuildWorkspaceManager")]
-    public class ExportedMSBuildWorkspaceManager : MSBuildWorkspaceManager
+    [Export(typeof(WorkspaceManager))]
+    [Name("Default WorkspaceManager")]
+    public class ExportedWorkspaceManager : WorkspaceManager
     {
 
     }

@@ -74,7 +74,7 @@
     <Compile Include="Completion\PackageIntellisenseControllerProvider.cs" />
     <Compile Include="Completion\VersionCompletion.cs" />
     <Compile Include="Exports\ExportedFileSystem.cs" />
-    <Compile Include="Exports\ExportedMSBuildWorkspaceManager.cs" />
+    <Compile Include="Exports\ExportedWorkspaceManager.cs" />
     <Compile Include="Exports\ExportedNuGetDiskFeedFactory.cs" />
     <Compile Include="Exports\ExportedNuGetV3ServiceFeedFactory.cs" />
     <Compile Include="Exports\ExportedPackageFeedFactorySelector.cs" />
