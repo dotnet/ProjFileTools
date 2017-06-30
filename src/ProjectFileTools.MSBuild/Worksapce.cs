@@ -21,7 +21,7 @@ namespace ProjectFileTools.MSBuild
         internal Workspace(string filePath)
         {
             _collection = new ProjectCollection();
-            _containedFiles = new HashSet<string>();
+            _containedFiles = new HashSet<string>(StringComparer.Ordinal);
             _watchers = new List<FileSystemWatcher>();
             _needsReload = false;
 

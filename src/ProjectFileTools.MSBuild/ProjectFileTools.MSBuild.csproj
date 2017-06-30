@@ -1,14 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'Common.props'))\Common.props" />
   <PropertyGroup>
-    <TargetFrameworks>net46</TargetFrameworks>
+    <TargetFramework>net46</TargetFramework>
   </PropertyGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
+  <ItemGroup>
     <PackageReference Include="Microsoft.Build" Version="15.3.0-preview-000117-01" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Language.Xml" Version="1.1.11" />
-    <Reference Update="**\Microsoft.Language.Xml.dll" CopyLocal="true" />
   </ItemGroup>
 
   <Target Name="BuiltProjectOutputGroup" />

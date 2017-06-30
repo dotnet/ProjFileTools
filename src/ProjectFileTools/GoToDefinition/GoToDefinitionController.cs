@@ -3,6 +3,7 @@ using EnvDTE;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using ProjectFileTools.MSBuild;
@@ -11,13 +12,11 @@ namespace ProjectFileTools
 {
     internal class GotoDefinitionController : IOleCommandTarget
     {
-        private readonly Guid _vSStd97CmdIDGuid;
         private readonly WorkspaceManager _workspaceManager;
 
         internal GotoDefinitionController(IWpfTextView textview, WorkspaceManager workspaceManager)
         {
             TextView = textview;
-            _vSStd97CmdIDGuid = new Guid("5EFC7975-14BC-11CF-9B2B-00AA00573819");
             _workspaceManager = workspaceManager;
         }
 
@@ -26,7 +25,7 @@ namespace ProjectFileTools
         public IOleCommandTarget Next { get; set; }
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
         {
-            if (pguidCmdGroup == _vSStd97CmdIDGuid)
+            if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
             {
                 if (cCmds == (uint)VSConstants.VSStd97CmdID.GotoDefn)
                 {
@@ -40,7 +39,7 @@ namespace ProjectFileTools
 
         public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
-            if (pguidCmdGroup == _vSStd97CmdIDGuid)
+            if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
             {
                 if (nCmdID == (uint)VSConstants.VSStd97CmdID.GotoDefn)
                 {
@@ -50,10 +49,10 @@ namespace ProjectFileTools
 
                     if (importedPath != null)
                     {
-                        DTE dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;
+                        DTE dte = (DTE)ServiceProvider.GlobalProvider.GetService(typeof(DTE));
                         dte.MainWindow.Activate();
 
-                        using (var state = new NewDocumentStateScope(Microsoft.VisualStudio.Shell.Interop.__VSNEWDOCUMENTSTATE.NDS_Provisional, Guid.Parse(ProjectFileToolsPackage.PackageGuidString)))
+                        using (NewDocumentStateScope state = new NewDocumentStateScope(__VSNEWDOCUMENTSTATE.NDS_Provisional, Guid.Parse(ProjectFileToolsPackage.PackageGuidString)))
                         {
                             EnvDTE.Window w = dte.ItemOperations.OpenFile(importedPath, EnvDTE.Constants.vsViewKindTextView);
                         }
