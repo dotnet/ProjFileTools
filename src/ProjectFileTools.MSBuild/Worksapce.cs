@@ -75,16 +75,16 @@ namespace ProjectFileTools.MSBuild
                     }
                 }
             }
-                return file;
+            return file;
         }
 
         internal bool ContainsProject(string filePath)
         {
-            ReloadIfNescessary();
+            ReloadIfNecessary();
             return _containedFiles.Contains(filePath);
         }
 
-        private void ReloadIfNescessary()
+        private void ReloadIfNecessary()
         {
             if (_needsReload)
             {

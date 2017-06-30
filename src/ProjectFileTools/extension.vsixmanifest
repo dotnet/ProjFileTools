@@ -14,7 +14,6 @@
     <Asset Type="Microsoft.VisualStudio.VsPackage" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
     <Asset Type="Microsoft.VisualStudio.MefComponent" Path="|ProjectFileTools.NuGetSearch|" />
     <Asset Type="Microsoft.VisualStudio.MefComponent" Path="|ProjectFileTools.MSBuild|" />
-    <!--<Asset Type="Microsoft.VisualStudio.Assembly" d:Source="File" Path="Microsoft.Language.Xml.dll" AssemblyName="Microsoft.Language.Xml, Version=1.0.0.0, Culture=neutral, PublicKeyToken=d8943316a876e00f" />-->
     <Asset Type="Microsoft.VisualStudio.MefComponent" Path="ProjectFileTools.dll" />
   </Assets>
   <Prerequisites>
