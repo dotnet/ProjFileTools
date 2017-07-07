@@ -22,7 +22,7 @@ namespace ProjectFileTools.MSBuild
         internal Workspace(string filePath)
         {
             _collection = new ProjectCollection();
-            _containedFiles = new HashSet<string>();
+            _containedFiles = new HashSet<string>(StringComparer.Ordinal);
             _watchers = new List<FileSystemWatcher>();
             _needsReload = false;
 
@@ -82,11 +82,11 @@ namespace ProjectFileTools.MSBuild
 
         internal bool ContainsProject(string filePath)
         {
-            ReloadIfNescessary();
+            ReloadIfNecessary();
             return _containedFiles.Contains(filePath);
         }
 
-        private void ReloadIfNescessary()
+        private void ReloadIfNecessary()
         {
             if (_needsReload)
             {
