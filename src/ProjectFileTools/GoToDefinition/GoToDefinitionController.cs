@@ -44,7 +44,7 @@ namespace ProjectFileTools
                 if (nCmdID == (uint)VSConstants.VSStd97CmdID.GotoDefn)
                 {
                     TextView.TextBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out ITextDocument textDoc);
-                    Workspace workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
+                    IWorkspace workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
                     string importedPath = workspace.ResolveDefinition(textDoc.FilePath, TextView.TextSnapshot.GetText(), TextView.Caret.Position.BufferPosition.Position);
 
                     if (importedPath != null)
