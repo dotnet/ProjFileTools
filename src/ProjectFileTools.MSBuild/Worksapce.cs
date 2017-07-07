@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 using Microsoft.Language.Xml;
@@ -10,7 +11,7 @@ namespace ProjectFileTools.MSBuild
     /// <summary>
     /// Contains an MSBuild project and logic to extract information from it
     /// </summary>
-    public class Workspace
+    public class Workspace : IWorkspace, IDisposable
     {
         private ProjectCollection _collection;
         private Project _project;
@@ -21,7 +22,7 @@ namespace ProjectFileTools.MSBuild
         internal Workspace(string filePath)
         {
             _collection = new ProjectCollection();
-            _containedFiles = new HashSet<string>(StringComparer.Ordinal);
+            _containedFiles = new HashSet<string>();
             _watchers = new List<FileSystemWatcher>();
             _needsReload = false;
 
@@ -46,14 +47,14 @@ namespace ProjectFileTools.MSBuild
         /// <returns></returns>
         public string ResolveDefinition(string filePath, string sourceText, int position)
         {
-            String file = null;
+            string file = null;
 
             if (_project != null)
             {
                 XmlDocumentSyntax root = Parser.ParseText(sourceText);
                 SyntaxNode syntaxNode = SyntaxLocator.FindNode(root, position);
 
-                if (syntaxNode.ParentElement.Name.Equals("Import"))
+                if (syntaxNode.ParentElement.Name.Equals(SyntaxNames.IMPORT))
                 {
                     while (syntaxNode.Parent.ParentElement == syntaxNode.ParentElement)
                     {
@@ -75,16 +76,17 @@ namespace ProjectFileTools.MSBuild
                     }
                 }
             }
+
             return file;
         }
 
         internal bool ContainsProject(string filePath)
         {
-            ReloadIfNecessary();
+            ReloadIfNescessary();
             return _containedFiles.Contains(filePath);
         }
 
-        private void ReloadIfNecessary()
+        private void ReloadIfNescessary()
         {
             if (_needsReload)
             {
@@ -112,22 +114,23 @@ namespace ProjectFileTools.MSBuild
         {
             _containedFiles.Clear();
 
-            foreach(FileSystemWatcher watcher in _watchers)
+            foreach (FileSystemWatcher watcher in _watchers)
             {
                 watcher.Changed -= MarkReload;
                 watcher.Deleted -= MarkReload;
                 watcher.Renamed -= MarkReload;
                 watcher.Dispose();
             }
+
             _watchers.Clear();
 
             foreach (ResolvedImport import in _project.Imports)
             {
-                _containedFiles.Add(import.ImportingElement.Location.File);
                 _containedFiles.Add(import.ImportedProject.FullPath);
             }
+            _containedFiles.Add(_project.FullPath);
 
-            foreach(string path in _containedFiles)
+            foreach (string path in _containedFiles)
             {
                 FileSystemWatcher watcher = new FileSystemWatcher();
                 watcher.Path = Path.GetDirectoryName(path);
@@ -145,5 +148,25 @@ namespace ProjectFileTools.MSBuild
         {
             _needsReload = true;
         }
+
+        public void Dispose()
+        {
+            var watchers = Interlocked.Exchange(ref _watchers, null);
+            if (watchers != null)
+            {
+                foreach (FileSystemWatcher watcher in _watchers)
+                {
+                    watcher.Changed -= MarkReload;
+                    watcher.Deleted -= MarkReload;
+                    watcher.Renamed -= MarkReload;
+                    watcher.Dispose();
+                }
+            }
+        }
+    }
+
+    public interface IWorkspace
+    {
+        string ResolveDefinition(string filePath, string sourceText, int position);
     }
 }
