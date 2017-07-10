@@ -54,7 +54,7 @@ namespace ProjectFileTools.MSBuild
                 XmlDocumentSyntax root = Parser.ParseText(sourceText);
                 SyntaxNode syntaxNode = SyntaxLocator.FindNode(root, position);
 
-                if (syntaxNode.ParentElement.Name.Equals(SyntaxNames.IMPORT))
+                if (syntaxNode.ParentElement.Name.Equals(SyntaxNames.Import))
                 {
                     while (syntaxNode.Parent.ParentElement == syntaxNode.ParentElement)
                     {
@@ -128,6 +128,7 @@ namespace ProjectFileTools.MSBuild
             {
                 _containedFiles.Add(import.ImportedProject.FullPath);
             }
+
             _containedFiles.Add(_project.FullPath);
 
             foreach (string path in _containedFiles)

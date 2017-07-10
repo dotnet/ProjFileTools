@@ -8,6 +8,6 @@ namespace ProjectFileTools.MSBuild
 {
     internal static class SyntaxNames
     {
-        internal const string IMPORT = "Import";
+        internal const string Import = "Import";
     }
 }

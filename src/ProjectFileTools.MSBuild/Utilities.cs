@@ -29,7 +29,7 @@ namespace ProjectFileTools.MSBuild
         internal static int GetStartOfLine(string text, int position)
         {
             Requires.NotNullOrEmpty(text, nameof(text));
-            Requires.Range(position > -1 && position < text.Length, nameof(position), "Position must be positive and less than text.Length");
+            Requires.Range(position > -1 && position <= text.Length, nameof(position), "Position must be positive and less than or equal to text.Length");
 
             while (position > 0 && text[position - 1] != '\n')
             {

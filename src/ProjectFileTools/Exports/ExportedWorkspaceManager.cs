@@ -8,6 +8,5 @@ namespace ProjectFileTools.Exports
     [Name("Default WorkspaceManager")]
     public class ExportedWorkspaceManager : WorkspaceManager
     {
-        
     }
 }
