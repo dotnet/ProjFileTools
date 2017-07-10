@@ -161,7 +161,7 @@ namespace ProjectFileTools.MSBuild
             List<FileSystemWatcher> watchers = Interlocked.Exchange(ref _watchers, null);
             if (watchers != null)
             {
-                foreach (FileSystemWatcher watcher in _watchers)
+                foreach (FileSystemWatcher watcher in watchers)
                 {
                     watcher.Changed -= MarkReload;
                     watcher.Deleted -= MarkReload;

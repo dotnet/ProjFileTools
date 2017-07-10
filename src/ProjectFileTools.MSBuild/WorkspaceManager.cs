@@ -13,7 +13,7 @@
         /// </summary>
         public IWorkspace GetWorkspace(string filePath)
         {
-            if (_workspace != null && _workspace.ContainsProject(filePath))
+            if (_workspace != null && !_workspace.IsDisposed && _workspace.ContainsProject(filePath))
             {
                 return _workspace;
             }
