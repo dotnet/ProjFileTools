@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.Composition;
-
-namespace ProjectFileTools.MSBuild
+﻿namespace ProjectFileTools.MSBuild
 {
     /// <summary>
     /// Provides the correct workspace
@@ -20,13 +18,10 @@ namespace ProjectFileTools.MSBuild
                 return _workspace;
             }
 
+            _workspace?.Dispose();
+
             _workspace = new Workspace(filePath);
             return _workspace;
         }
-    }
-
-    public interface IWorkspaceManager
-    {
-        IWorkspace GetWorkspace(string filePath);
     }
 }

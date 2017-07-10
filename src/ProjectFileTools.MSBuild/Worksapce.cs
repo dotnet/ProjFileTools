@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using Microsoft;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
 using Microsoft.Language.Xml;
@@ -11,13 +12,15 @@ namespace ProjectFileTools.MSBuild
     /// <summary>
     /// Contains an MSBuild project and logic to extract information from it
     /// </summary>
-    public class Workspace : IWorkspace, IDisposable
+    public class Workspace : IWorkspace, IDisposableObservable
     {
         private ProjectCollection _collection;
         private Project _project;
         private HashSet<string> _containedFiles;
         private List<FileSystemWatcher> _watchers;
         private bool _needsReload;
+
+        public bool IsDisposed { get; private set; }
 
         internal Workspace(string filePath)
         {
@@ -47,6 +50,7 @@ namespace ProjectFileTools.MSBuild
         /// <returns></returns>
         public string ResolveDefinition(string filePath, string sourceText, int position)
         {
+            Verify.NotDisposed(this);
             string file = null;
 
             if (_project != null)
@@ -82,6 +86,7 @@ namespace ProjectFileTools.MSBuild
 
         internal bool ContainsProject(string filePath)
         {
+            Verify.NotDisposed(this);
             ReloadIfNecessary();
             return _containedFiles.Contains(filePath);
         }
@@ -152,7 +157,8 @@ namespace ProjectFileTools.MSBuild
 
         public void Dispose()
         {
-            var watchers = Interlocked.Exchange(ref _watchers, null);
+            IsDisposed = true;
+            List<FileSystemWatcher> watchers = Interlocked.Exchange(ref _watchers, null);
             if (watchers != null)
             {
                 foreach (FileSystemWatcher watcher in _watchers)
@@ -164,10 +170,5 @@ namespace ProjectFileTools.MSBuild
                 }
             }
         }
-    }
-
-    public interface IWorkspace
-    {
-        string ResolveDefinition(string filePath, string sourceText, int position);
     }
 }
