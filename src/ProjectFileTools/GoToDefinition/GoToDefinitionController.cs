@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using EnvDTE;
+using FarTestProvider;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.FindAllReferences;
+using Microsoft.VisualStudio.Shell.TableManager;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
@@ -43,21 +47,45 @@ namespace ProjectFileTools
             {
                 TextView.TextBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out ITextDocument textDoc);
                 IWorkspace workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
-                string importedPath = workspace.ResolveDefinition(textDoc.FilePath, TextView.TextSnapshot.GetText(), TextView.Caret.Position.BufferPosition.Position);
+                List<Definition> definitions = workspace.ResolveDefinition(textDoc.FilePath, TextView.TextSnapshot.GetText(), TextView.Caret.Position.BufferPosition.Position);
 
-                if (importedPath != null)
+                if (definitions.Count == 1)
                 {
                     DTE dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;
                     dte.MainWindow.Activate();
 
                     using (var state = new NewDocumentStateScope(Microsoft.VisualStudio.Shell.Interop.__VSNEWDOCUMENTSTATE.NDS_Provisional, Guid.Parse(ProjectFileToolsPackage.PackageGuidString)))
                     {
-                        EnvDTE.Window w = dte.ItemOperations.OpenFile(importedPath, EnvDTE.Constants.vsViewKindTextView);
+                        EnvDTE.Window w = dte.ItemOperations.OpenFile(definitions[0].File, EnvDTE.Constants.vsViewKindTextView);
+
+                        if (definitions[0].Line.HasValue)
+                        {
+                            ((EnvDTE.TextSelection)dte.ActiveDocument.Selection).GotoLine(definitions[0].Line.Value, true);
+                        }
                     }
+
+                    return VSConstants.S_OK;
+                }
+
+                else if (definitions.Count > 1)
+                {
+                    IFindAllReferencesService farService = (IFindAllReferencesService)Package.GetGlobalService(typeof(SVsFindAllReferences));
+                    FarDataSource dataSource = new FarDataSource(1);
+                    dataSource.Snapshots[0] = new FarDataSnapshot(definitions);
+
+                    IFindAllReferencesWindow farWindow = farService.StartSearch(definitions[0].Type);
+                    ITableManager _farManager = farWindow.Manager;
+                    _farManager.AddSource(dataSource);
+
+                    dataSource.Sink.IsStable = false;
+                    dataSource.Sink.AddSnapshot(dataSource.Snapshots[0]);
+                    dataSource.Sink.IsStable = true;
+
                     return VSConstants.S_OK;
                 }
 
             }
+
             return Next?.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut) ?? (int)Microsoft.VisualStudio.OLE.Interop.Constants.OLECMDERR_E_NOTSUPPORTED;
         }
 
