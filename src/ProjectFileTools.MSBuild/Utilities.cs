@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft;
+﻿using Microsoft;
 
 namespace ProjectFileTools.MSBuild
 {
@@ -37,6 +32,67 @@ namespace ProjectFileTools.MSBuild
             }
 
             return position;
+        }
+
+        internal static bool IsProperty(string text, int position, out string propertyName)
+        {
+            Requires.NotNull(text, nameof(text));
+            Requires.Range(position > -1 && position < text.Length, nameof(position), "Position must be positive and less than text.Length");
+
+            propertyName = null;
+            if (text[position] == ')' && position > 1)
+            {
+                position--;
+            }
+
+            int propStart = position;
+            int propEnd = position + 1;
+
+            while (text[propStart] != '(' && propStart > 1)
+            {
+                if (!char.IsLetterOrDigit(text[propStart]))
+                {
+                    return false;
+                }
+
+                propStart--;
+            }
+
+            if (!(text[propStart] == '(' && text[propStart - 1] == '$'))
+            {
+                return false;
+            }
+
+            while (propEnd < text.Length - 1 && text[propEnd] != '.' && text[propEnd] != ')')
+            {
+                if (!char.IsLetterOrDigit(text[propEnd]))
+                {
+                    return false;
+                }
+
+                propEnd++;
+            }
+            if (!(text[propEnd] == '.' || text[propEnd] == ')'))
+            {
+                return false;
+            }
+
+            propertyName = text.Substring(propStart + 1, propEnd - propStart - 1);
+            return true;
+        }
+
+        internal static string getFileName(string filePath, bool extension)
+        {
+            Requires.NotNull(filePath, nameof(filePath));
+
+            string[] names = filePath.Split('\\');
+
+            if (extension)
+            {
+                return names[names.Length - 1];
+            }
+
+            return names[names.Length - 1].Substring(0, names[names.Length - 1].IndexOf('.'));
         }
     }
 }

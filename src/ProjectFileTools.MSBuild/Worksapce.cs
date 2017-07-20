@@ -48,17 +48,47 @@ namespace ProjectFileTools.MSBuild
         /// <param name="sourceText">Text in the current file</param>
         /// <param name="position">Position of item that is to be resolved</param>
         /// <returns></returns>
-        public string ResolveDefinition(string filePath, string sourceText, int position)
+        public List<Definition> ResolveDefinition(string filePath, string sourceText, int position)
         {
             Verify.NotDisposed(this);
-            string file = null;
+            List<Definition> definitions = new List<Definition>();
 
             if (_project != null)
             {
                 XmlDocumentSyntax root = Parser.ParseText(sourceText);
                 SyntaxNode syntaxNode = SyntaxLocator.FindNode(root, position);
 
-                if (syntaxNode.ParentElement.Name.Equals(SyntaxNames.Import))
+                if ((int)syntaxNode.Kind == SyntaxNames.XmlLiteralTokenValue && Utilities.IsProperty(sourceText.Substring(syntaxNode.Span.Start, syntaxNode.FullWidth), position - syntaxNode.Span.Start, out string propertyName))
+                {
+                    foreach (ProjectProperty property in _project.Properties)
+                    {
+                        if (property.Name == propertyName)
+                        {
+                            ProjectProperty currentProperty = property;
+
+                            while (currentProperty.Predecessor != null)
+                            {
+                                if (currentProperty.Xml?.Location != null)
+                                {
+                                    ElementLocation location = currentProperty.Xml.Location;
+                                    definitions.Add(new Definition(location.File, Utilities.getFileName(_project.Xml.Location.File, false), currentProperty.Name + " Definitions", currentProperty.EvaluatedValue, location.Line, location.Column));
+                                }
+
+                                currentProperty = currentProperty.Predecessor;
+                            }
+
+                            if (currentProperty.Xml?.Location != null)
+                            {
+                                ElementLocation lastLocation = currentProperty.Xml.Location;
+                                definitions.Add(new Definition(lastLocation.File, Utilities.getFileName(_project.Xml.Location.File, false), currentProperty.Name + " Definitions", currentProperty.EvaluatedValue, lastLocation.Line, lastLocation.Column));
+                            }
+
+                            break;
+                        }
+                    }
+                }
+
+                else if (syntaxNode.ParentElement != null && syntaxNode.ParentElement.Name.Equals(SyntaxNames.Import))
                 {
                     while (syntaxNode.Parent.ParentElement == syntaxNode.ParentElement)
                     {
@@ -72,16 +102,45 @@ namespace ProjectFileTools.MSBuild
                     foreach (ResolvedImport import in _project.Imports)
                     {
                         ElementLocation location = import.ImportingElement.Location;
+
                         if (location.File == filePath && col == location.Column && line == location.Line)
                         {
-                            file = import.ImportedProject.FullPath;
+                            definitions.Add(new Definition(import.ImportedProject.FullPath, Utilities.getFileName(_project.Xml.Location.File, false), "Imported Files", Utilities.getFileName(import.ImportedProject.FullPath, true)));
+                        }
+                    }
+                }
+
+                else if (syntaxNode.ParentElement != null && syntaxNode.ParentElement.Name.Equals(SyntaxNames.Project))
+                {
+                    bool foundSdk = false;
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        if (sourceText.Substring(syntaxNode.Start, 3).Equals(SyntaxNames.Sdk))
+                        {
+                            foundSdk = true;
                             break;
+                        }
+
+                        syntaxNode = syntaxNode.Parent;
+                    }
+
+                    if (foundSdk)
+                    {
+                        foreach (ResolvedImport import in _project.Imports)
+                        {
+                            ElementLocation location = import.ImportingElement.Location;
+
+                            if (location.File == filePath && 0 == location.Column && 0 == location.Line)
+                            {
+                                definitions.Add(new Definition(import.ImportedProject.FullPath, Utilities.getFileName(_project.Xml.Location.File, false), "Sdk Imports", Utilities.getFileName(import.ImportedProject.FullPath, true)));
+                            }
                         }
                     }
                 }
             }
 
-            return file;
+            return definitions;
         }
 
         internal bool ContainsProject(string filePath)

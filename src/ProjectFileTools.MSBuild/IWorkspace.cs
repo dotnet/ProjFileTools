@@ -1,7 +1,9 @@
-﻿namespace ProjectFileTools.MSBuild
+﻿using System.Collections.Generic;
+
+namespace ProjectFileTools.MSBuild
 {
     public interface IWorkspace
     {
-        string ResolveDefinition(string filePath, string sourceText, int position);
+        List<Definition> ResolveDefinition(string filePath, string sourceText, int position);
     }
 }

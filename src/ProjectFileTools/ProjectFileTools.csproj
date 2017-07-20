@@ -80,6 +80,10 @@
     <Compile Include="Exports\ExportedPackageFeedFactorySelector.cs" />
     <Compile Include="Exports\ExportedPackageSearchManager.cs" />
     <Compile Include="Exports\ExportedWebRequestFactory.cs" />
+    <Compile Include="FindAllReferences\FarDataSnapshot.cs" />
+    <Compile Include="FindAllReferences\FarDataSource.cs" />
+    <Compile Include="FindAllReferences\FarDataSubscription.cs" />
+    <Compile Include="FindAllReferences\FarDefinitionBucket.cs" />
     <Compile Include="GoToDefinition\GoToDefinitionController.cs" />
     <Compile Include="PackageFeedRegistryProvider.cs" />
     <Compile Include="PackageInfoControl.xaml.cs">
