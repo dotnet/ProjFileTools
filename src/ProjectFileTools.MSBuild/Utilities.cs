@@ -80,19 +80,5 @@ namespace ProjectFileTools.MSBuild
             propertyName = text.Substring(propStart + 1, propEnd - propStart - 1);
             return true;
         }
-
-        internal static string getFileName(string filePath, bool extension)
-        {
-            Requires.NotNull(filePath, nameof(filePath));
-
-            string[] names = filePath.Split('\\');
-
-            if (extension)
-            {
-                return names[names.Length - 1];
-            }
-
-            return names[names.Length - 1].Substring(0, names[names.Length - 1].IndexOf('.'));
-        }
     }
 }

@@ -51,6 +51,5 @@
             Line = line;
             Col = col;
         }
-
     }
 }
