@@ -58,7 +58,8 @@ namespace ProjectFileTools.MSBuild
                 XmlDocumentSyntax root = Parser.ParseText(sourceText);
                 SyntaxNode syntaxNode = SyntaxLocator.FindNode(root, position);
 
-                if ((int)syntaxNode.Kind == SyntaxNames.XmlLiteralTokenValue && Utilities.IsProperty(sourceText.Substring(syntaxNode.Span.Start, syntaxNode.FullWidth), position - syntaxNode.Span.Start, out string propertyName))
+                // Resolves Definition for properties e.g. $(foo)
+                if (syntaxNode.Kind == SyntaxKind.XmlTextLiteralToken && Utilities.IsProperty(sourceText.Substring(syntaxNode.Span.Start, syntaxNode.FullWidth), position - syntaxNode.Span.Start, out string propertyName))
                 {
                     foreach (ProjectProperty property in _project.Properties)
                     {
@@ -71,7 +72,7 @@ namespace ProjectFileTools.MSBuild
                                 if (currentProperty.Xml?.Location != null)
                                 {
                                     ElementLocation location = currentProperty.Xml.Location;
-                                    definitions.Add(new Definition(location.File, Utilities.getFileName(_project.Xml.Location.File, false), currentProperty.Name + " Definitions", currentProperty.EvaluatedValue, location.Line, location.Column));
+                                    definitions.Add(new Definition(location.File, Path.GetFileNameWithoutExtension(_project.Xml.Location.File), currentProperty.Name + " Definitions", currentProperty.EvaluatedValue, location.Line, location.Column));
                                 }
 
                                 currentProperty = currentProperty.Predecessor;
@@ -80,7 +81,7 @@ namespace ProjectFileTools.MSBuild
                             if (currentProperty.Xml?.Location != null)
                             {
                                 ElementLocation lastLocation = currentProperty.Xml.Location;
-                                definitions.Add(new Definition(lastLocation.File, Utilities.getFileName(_project.Xml.Location.File, false), currentProperty.Name + " Definitions", currentProperty.EvaluatedValue, lastLocation.Line, lastLocation.Column));
+                                definitions.Add(new Definition(lastLocation.File, Path.GetFileNameWithoutExtension(_project.Xml.Location.File), currentProperty.Name + " Definitions", currentProperty.EvaluatedValue, lastLocation.Line, lastLocation.Column));
                             }
 
                             break;
@@ -88,6 +89,7 @@ namespace ProjectFileTools.MSBuild
                     }
                 }
 
+                // Resolves Definition for regular imports
                 else if (syntaxNode.ParentElement != null && syntaxNode.ParentElement.Name.Equals(SyntaxNames.Import))
                 {
                     while (syntaxNode.Parent.ParentElement == syntaxNode.ParentElement)
@@ -105,11 +107,12 @@ namespace ProjectFileTools.MSBuild
 
                         if (location.File == filePath && col == location.Column && line == location.Line)
                         {
-                            definitions.Add(new Definition(import.ImportedProject.FullPath, Utilities.getFileName(_project.Xml.Location.File, false), "Imported Files", Utilities.getFileName(import.ImportedProject.FullPath, true)));
+                            definitions.Add(new Definition(import.ImportedProject.FullPath, Path.GetFileNameWithoutExtension(_project.Xml.Location.File), "Imported Files", Path.GetFileName(import.ImportedProject.FullPath)));
                         }
                     }
                 }
 
+                // Resolves Definition for the project's sdk
                 else if (syntaxNode.ParentElement != null && syntaxNode.ParentElement.Name.Equals(SyntaxNames.Project))
                 {
                     bool foundSdk = false;
@@ -133,7 +136,7 @@ namespace ProjectFileTools.MSBuild
 
                             if (location.File == filePath && 0 == location.Column && 0 == location.Line)
                             {
-                                definitions.Add(new Definition(import.ImportedProject.FullPath, Utilities.getFileName(_project.Xml.Location.File, false), "Sdk Imports", Utilities.getFileName(import.ImportedProject.FullPath, true)));
+                                definitions.Add(new Definition(import.ImportedProject.FullPath, Path.GetFileNameWithoutExtension(_project.Xml.Location.File), "Sdk Imports", Path.GetFileName(import.ImportedProject.FullPath)));
                             }
                         }
                     }
