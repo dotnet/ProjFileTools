@@ -1,5 +1,8 @@
 ﻿namespace ProjectFileTools.MSBuild
 {
+    /// <summary>
+    /// Contains the information for the FindAllReferences table and GoToDefinition command for a single MSBuild item.
+    /// </summary>
     public class Definition
     {
         /// <summary>
