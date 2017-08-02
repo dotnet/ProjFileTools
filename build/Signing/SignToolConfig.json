@@ -5,7 +5,8 @@
             "strongName": "MsSharedLib72",
             "values": [
                 "ProjectFileTools.dll",
-                "ProjectFileTools.NuGetSearch.dll"
+                "ProjectFileTools.NuGetSearch.dll",
+                "ProjectFileTools.MSBuild.dll"
             ]
         },
         {
@@ -15,5 +16,8 @@
                 "ProjectFileTools.vsix"
             ]
         }
+    ],
+    "external": [
+        "Microsoft.Language.Xml.dll"
     ]
 }
