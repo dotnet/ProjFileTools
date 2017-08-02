@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), 'Common.props'))\Common.props" />
+  <PropertyGroup>
+    <TargetFramework>net46</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build" Version="15.3.0-preview-000117-01" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Language.Xml" Version="1.1.11" />
+    <PackageReference Include="Microsoft.VisualStudio.Validation" Version="15.0.26606-alpha" />
+    <Reference Update="**\Microsoft.Language.Xml.dll" CopyLocal="true" />
+  </ItemGroup>
+
+  <Target Name="BuiltProjectOutputGroup" />
+  <Target Name="BuiltProjectOutputGroupDependencies" />
+  <Target Name="GetCopyToOutputDirectoryItems" />
+  <Target Name="SatelliteDllsProjectOutputGroup" />
+  <Target Name="DebugSymbolsProjectOutputGroup" />
+</Project>
