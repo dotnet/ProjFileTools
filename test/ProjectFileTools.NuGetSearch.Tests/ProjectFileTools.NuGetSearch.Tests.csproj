@@ -9,7 +9,7 @@
     <Reference Include="System.Core" />
     <PackageReference Include="MSTest.TestAdapter" Version="1.1.6-preview" />
     <PackageReference Include="MSTest.TestFramework" Version="1.0.7-preview" />
-    <PackageReference Include="NuGet.Frameworks" Version="4.0.0-rc-2048" />
+    <PackageReference Include="NuGet.Frameworks" Version="4.3.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\ProjectFileTools.NuGetSearch\ProjectFileTools.NuGetSearch.csproj" />
