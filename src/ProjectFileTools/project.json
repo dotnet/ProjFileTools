@@ -25,7 +25,7 @@
     "Microsoft.VisualStudio.TextManager.Interop": "7.10.6070",
     "Microsoft.VisualStudio.TextManager.Interop.11.0": "11.0.61030",
     "Microsoft.VisualStudio.TextManager.Interop.8.0": "8.0.50727",
-    "Microsoft.VisualStudio.Threading": "15.5.11-beta",
+    "Microsoft.VisualStudio.Threading": "15.3.83",
     "Microsoft.VisualStudio.Utilities": "15.0.26607",
     "Microsoft.VisualStudio.Validation": "15.3.23",
     "Microsoft.VSSDK.BuildTools": "15.1.192",
