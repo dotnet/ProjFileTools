@@ -14,11 +14,16 @@ on the official Visual Studio extension gallery.
 
 ## 1.1
 
-- [x] Feature 3
-- [x] Feature 4
+- [x] Go To Definition (F12) for MSBuild imports
+- [x] Go To Definition (F12) for MSBuild properties
 
 ## 1.0
 
+- [x] Initial release
+- [x] Intellisense for NuGet package name and version
+- [x] Hover tooltips for NuGet packages
+
+## Template
 - [x] Initial release
 - [x] Feature 1
 - [x] Feature 2
