@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using EnvDTE;
 using FarTestProvider;
 using Microsoft.VisualStudio;
@@ -10,7 +11,9 @@ using Microsoft.VisualStudio.Shell.TableManager;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
+using ProjectFileTools.Completion;
 using ProjectFileTools.MSBuild;
+using ProjectFileTools.NuGetSearch.Contracts;
 
 namespace ProjectFileTools
 {
@@ -41,11 +44,55 @@ namespace ProjectFileTools
             return Next?.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText) ?? (int)Microsoft.VisualStudio.OLE.Interop.Constants.OLECMDERR_E_NOTSUPPORTED;
         }
 
+        private static bool PackageExistsOnNuGet(string packageName, string version, out string url)
+        {
+            string packageAndVersionUrl = $"https://www.nuget.org/packages/{packageName}/{version}/";
+            string packageUrl = $"https://www.nuget.org/packages/{packageName}/";
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    HttpResponseMessage response = client.GetAsync(packageAndVersionUrl).Result;
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        url = packageAndVersionUrl;
+                        return true;
+                    }
+                    else
+                    {
+                        response = client.GetAsync(packageAndVersionUrl).Result;
+
+                        if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                        {
+                            url = packageUrl;
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            url = null;
+            return false;
+        }
+
         public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
             if (pguidCmdGroup == _vSStd97CmdIDGuid && nCmdID == (uint)VSConstants.VSStd97CmdID.GotoDefn)
             {
                 TextView.TextBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out ITextDocument textDoc);
+
+                if (PackageCompletionSource.IsInRangeForPackageCompletion(TextView.TextSnapshot, TextView.Caret.Position.BufferPosition.Position, out Span targetSpan, out string packageName, out string packageVersion, out string completionType))
+                {
+                    if(PackageExistsOnNuGet(packageName, packageVersion, out string url))
+                    {
+                        System.Diagnostics.Process.Start(url);
+                        return VSConstants.S_OK;
+                    }
+                }
+
                 IWorkspace workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
                 List<Definition> definitions = workspace.ResolveDefinition(textDoc.FilePath, TextView.TextSnapshot.GetText(), TextView.Caret.Position.BufferPosition.Position);
 
