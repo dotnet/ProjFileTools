@@ -30,7 +30,7 @@ build.cmd /no-deploy-extension /${configuration.toLowerCase()} /no-node-reuse /t
         archiveSettings.setFailIfNothingArchived()
         archiveSettings.setArchiveOnFailure()
         Utilities.addArchival(newJob, archiveSettings)
-        Utilities.setMachineAffinity(newJob, 'Windows_NT', 'latest-or-auto-dev15')
+        Utilities.setMachineAffinity(newJob, 'Windows_NT', 'latest-or-auto-dev15-0')
         Utilities.addMSTestResults(newJob, "TestResults/*.trx")
         Utilities.standardJobSetup(newJob, project, isPr, "*/$branchName")
         if (isPr) {
