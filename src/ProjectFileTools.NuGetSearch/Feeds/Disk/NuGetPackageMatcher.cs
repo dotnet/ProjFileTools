@@ -22,9 +22,26 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Disk
 
             string libPath = Path.Combine(dir, "lib");
             string buildPath = Path.Combine(dir, "build");
-            
-            return (fileSystem.DirectoryExists(libPath) && fileSystem.EnumerateDirectories(libPath, "*", SearchOption.TopDirectoryOnly).Any(x => DefaultCompatibilityProvider.Instance.IsCompatible(targetFramework, NuGetFramework.ParseFolder(fileSystem.GetDirectoryName(x)))))
-                || (fileSystem.DirectoryExists(buildPath) && fileSystem.EnumerateDirectories(buildPath, "*", SearchOption.TopDirectoryOnly).Any(x => DefaultCompatibilityProvider.Instance.IsCompatible(targetFramework, NuGetFramework.ParseFolder(fileSystem.GetDirectoryName(x)))));
+
+			if (fileSystem.DirectoryExists (libPath)) {
+				foreach (var fxDir in fileSystem.EnumerateDirectories (libPath, "*", SearchOption.TopDirectoryOnly)) {
+					var fxName = NuGetFramework.ParseFolder (Path.GetFileName (fxDir));
+					if (DefaultCompatibilityProvider.Instance.IsCompatible (targetFramework, fxName)) {
+						return true;
+					}
+				}
+			}
+
+			if (fileSystem.DirectoryExists (buildPath)) {
+				foreach (var fxDir in fileSystem.EnumerateDirectories (buildPath, "*", SearchOption.TopDirectoryOnly)) {
+					var fxName = NuGetFramework.ParseFolder (Path.GetFileName (fxDir));
+					if (DefaultCompatibilityProvider.Instance.IsCompatible (targetFramework, fxName)) {
+						return true;
+					}
+				}
+			}
+
+			return false;
         }
     }
 }
