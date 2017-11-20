@@ -5,23 +5,31 @@ namespace ProjectFileTools.NuGetSearch.Feeds
 
     public class PackageInfo : IPackageInfo
     {
-        public PackageInfo(string id, string version, string authors, string description, string licenseUrl, string projectUrl, string iconUrl, FeedKind sourceKind)
+        public PackageInfo(string id, string version, string title, string authors, string summary, string description, string licenseUrl, string projectUrl, string iconUrl, string tags, FeedKind sourceKind)
         {
             Id = id;
             Version = version;
+            Title = title;
             Authors = authors;
             Description = description;
             LicenseUrl = licenseUrl;
             ProjectUrl = projectUrl;
             SourceKind = sourceKind;
             IconUrl = iconUrl;
+            Tags = tags;
         }
+
+        public string Id { get; }
+
+        public string Version { get; }
+
+        public string Title { get; }
 
         public string Authors { get; }
 
-        public string Description { get; }
+        public string Summary { get; }
 
-        public string Version { get; }
+        public string Description { get; }
 
         public string LicenseUrl { get; }
 
@@ -29,7 +37,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds
 
         public string IconUrl { get; }
 
-        public string Id { get; }
+        public string Tags { get; }
 
         public FeedKind SourceKind { get; }
     }
