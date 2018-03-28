@@ -244,7 +244,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
                         return null;
                     }
 
-                    string id, authors, description, licenseUrl, projectUrl, iconUrl;
+                    string id, title, authors, summary, description, licenseUrl, projectUrl, iconUrl, tags;
                     SemanticVersion bestSemanticVersion = null;
                     PackageInfo packageInfo = null;
 
@@ -273,12 +273,15 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
                                     if (string.Equals(version, catalogEntry["version"]?.ToString(), StringComparison.OrdinalIgnoreCase))
                                     {
                                         id = catalogEntry["id"]?.ToString();
+                                        title = catalogEntry ["title"]?.ToString ();
                                         authors = catalogEntry["authors"]?.ToString();
+                                        summary = catalogEntry ["summary"]?.ToString ();
                                         description = catalogEntry["description"]?.ToString();
                                         projectUrl = catalogEntry["projectUrl"]?.ToString();
                                         licenseUrl = catalogEntry["licenseUrl"]?.ToString();
                                         iconUrl = catalogEntry["iconUrl"]?.ToString();
-                                        packageInfo = new PackageInfo(id, version, authors, description, licenseUrl, projectUrl, iconUrl, _kind);
+                                        tags = catalogEntry ["tags"]?.ToString ();
+                                        packageInfo = new PackageInfo(id, version, title, authors, summary, description, licenseUrl, projectUrl, iconUrl, tags, _kind);
                                         return packageInfo;
                                     }
                                 }
@@ -287,12 +290,15 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
                                     if(currentVersion.CompareTo(bestSemanticVersion) > 0)
                                     {
                                         id = catalogEntry["id"]?.ToString();
+                                        title = catalogEntry["title"]?.ToString ();
                                         authors = catalogEntry["authors"]?.ToString();
-                                        description = catalogEntry["description"]?.ToString();
+                                        summary = catalogEntry["summary"]?.ToString();
+                                        description = catalogEntry["description"]?.ToString ();
                                         projectUrl = catalogEntry["projectUrl"]?.ToString();
                                         licenseUrl = catalogEntry["licenseUrl"]?.ToString();
-                                        iconUrl = catalogEntry["iconUrl"]?.ToString();
-                                        packageInfo = new PackageInfo(id, ver, authors, description, licenseUrl, projectUrl, iconUrl, _kind);
+                                        iconUrl = catalogEntry["iconUrl"]?.ToString ();
+                                        tags = catalogEntry["tags"]?.ToString();
+                                        packageInfo = new PackageInfo(id, version, title, authors, summary, description, licenseUrl, projectUrl, iconUrl, tags, _kind);
                                         bestSemanticVersion = currentVersion;
                                     }
                                 }
