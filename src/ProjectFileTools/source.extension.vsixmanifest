@@ -4,6 +4,7 @@
         <Identity Id="e22f3d7e-6b01-4ef8-b3cb-ea293a87b00e" Version="1.1.0" Language="en-US" Publisher="Microsoft" />
         <DisplayName>Project File Tools</DisplayName>
         <Description xml:space="preserve">Provides Intellisense and other tooling for XML based project files such as .csproj and .vbproj files.</Description>
+        <MoreInfo>https://marketplace.visualstudio.com/items?itemName=ms-madsk.ProjectFileTools</MoreInfo>
         <Icon>Resources\Icon.png</Icon>
         <PreviewImage>Resources\Icon.png</PreviewImage>
         <Tags>project, csproj, vbproj</Tags>
