@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.VisualStudio.Imaging;
+using Microsoft.VisualStudio.Shell;
 using ProjectFileTools.NuGetSearch;
 using ProjectFileTools.NuGetSearch.Contracts;
 
@@ -45,8 +46,9 @@ namespace ProjectFileTools
 
             if (package != null)
             {
-                Dispatcher.Invoke(() =>
+                ThreadHelper.JoinableTaskFactory.Run(async () =>
                 {
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                     if (!_firstRun && !IsVisible)
                     {
                         return;

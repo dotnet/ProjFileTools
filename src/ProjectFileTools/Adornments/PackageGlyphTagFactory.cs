@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Windows.Media.Imaging;
 using Microsoft.VisualStudio.Imaging;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
@@ -94,8 +95,9 @@ namespace ProjectFileTools.Adornments
                     if (Uri.TryCreate(package.IconUrl, UriKind.Absolute, out Uri iconUri))
                     {
                         string proposedIcon = package.IconUrl;
-                        t.PackageIcon.Dispatcher.Invoke(() =>
+                        ThreadHelper.JoinableTaskFactory.Run(async () =>
                         {
+                            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                             if(currentIcon == proposedIcon)
                             {
                                 return;
