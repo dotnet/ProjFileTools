@@ -39,6 +39,150 @@ namespace ProjectFileTools.Completion
             textBuffer.Properties.AddProperty(typeof(PackageCompletionSource), this);
         }
 
+        private static bool TryGetExtents(ITextSnapshot snapshot, int pos, 
+            out string documentText, out int start, out int end, out int startQuote, out int endQuote,
+            out int realEnd, out bool isHealed, out string healedXml)
+        {
+            documentText = snapshot.GetText();
+            start = pos < documentText.Length ? documentText.LastIndexOf('<', pos) : documentText.LastIndexOf('<');
+            end = pos < documentText.Length ? documentText.IndexOf('>', pos) : -1;
+            startQuote = documentText.LastIndexOf('"', pos - 1);
+            endQuote = pos < documentText.Length ? documentText.IndexOf('"', pos) : -1;
+            realEnd = end;
+
+            if (startQuote > -1 && startQuote < start || end > -1 && endQuote > end)
+            {
+                healedXml = null;
+                isHealed = false;
+                return false;
+            }
+
+            string fragmentText = null;
+            //If we managed to find a close...
+            if (end > start)
+            {
+                int nextStart = start < documentText.Length - 1 ? documentText.IndexOf('<', start + 1) : -1;
+
+                //If we found another start before the close...
+                //      <PackageReference Include="
+                //  </ItemGroup>
+                if (nextStart > -1 && nextStart < end)
+                {
+                    //Heal
+                    fragmentText = documentText.Substring(start, nextStart - start).Trim();
+                    realEnd = fragmentText.Length + start;
+
+                    switch (fragmentText[fragmentText.Length - 1])
+                    {
+                        case '\"':
+                            if (endQuote > nextStart || endQuote < 0)
+                            {
+                                endQuote = fragmentText.Length + start;
+                                fragmentText += "\"";
+                            }
+                            break;
+                        case '>':
+                            healedXml = null;
+                            isHealed = false;
+                            return false;
+                        default:
+                            //If there's a start quote in play, we're just looking at an unclosed attribute value
+                            if (startQuote > start)
+                            {
+                                endQuote = fragmentText.Length + start;
+                                fragmentText += "\"";
+                            }
+                            else
+                            {
+                                healedXml = null;
+                                isHealed = false;
+                                return false;
+                            }
+                            break;
+                    }
+
+                    end = fragmentText.Length + 2 + start;
+                    fragmentText += " />";
+                    isHealed = true;
+                }
+                //We didn't find that, so we're "good"... we might have a non-self closed tag though
+                else
+                {
+                    isHealed = false;
+
+                    //Unless of course the closing quote was after the end...
+                    if (endQuote < 0 || endQuote > end)
+                    {
+                        fragmentText = documentText.Substring(start, end - start);
+
+                        if (fragmentText.EndsWith("/"))
+                        {
+                            fragmentText = fragmentText.Substring(0, fragmentText.Length - 1);
+                        }
+
+                        fragmentText = fragmentText.TrimEnd() + "\" />";
+
+                        endQuote = fragmentText.Length - 4 + start;
+                        end = fragmentText.Length - 1 + start;
+                    }
+                    else
+                    {
+                        fragmentText = documentText.Substring(start, end - start + 1);
+                    }
+                }
+            }
+            //If we didn't find a close, if we found an end quote, that's good enough
+            else if (endQuote > start)
+            {
+                realEnd = endQuote;
+                fragmentText = documentText.Substring(start, endQuote - start + 1) + " />";
+                end = fragmentText.Length - 1 + start;
+                isHealed = true;
+            }
+            //If we didn't find an end quote even, if we found an open quote, that might be good enough
+            else if (startQuote > start)
+            {
+                //If we find a close before the cursor that's after the start quote, we're outside of the element
+                if (documentText.LastIndexOf('>', pos - 1) > startQuote)
+                {
+                    healedXml = null;
+                    isHealed = false;
+                    return false;
+                }
+
+                //Otherwise, we're presumably just after the start quote (and maybe some text) at the end of the document
+                //  we already know there's no closing quote or end, see if there's another start we can run up to
+                int nextStart = pos < documentText.Length ? documentText.IndexOf('<', pos) : -1;
+
+                //If there isn't, run off to the end of the document
+                if (nextStart < 0)
+                {
+                    fragmentText = documentText.Substring(start, documentText.Length - start).TrimEnd();
+                }
+                else
+                {
+                    fragmentText = documentText.Substring(start, nextStart - start + 1);
+                    fragmentText = fragmentText.Trim();
+                }
+
+                realEnd = start + fragmentText.Length - 1;
+                fragmentText += "\" />";
+                endQuote = fragmentText.Length - 4 + start;
+                end = fragmentText.Length - 1 + start;
+                isHealed = true;
+            }
+            //All we've got to go on is the start, that's not good enough
+            else
+            {
+                healedXml = null;
+                isHealed = false;
+                return false;
+            }
+
+            healedXml = fragmentText;
+            return true;
+        }
+
         public static bool TryHealOrAdvanceAttributeSelection(ITextSnapshot snapshot, ref int pos, out Span targetSpan, out string newText, out bool isHealingRequired)
         {
             if (pos < 1)
@@ -49,60 +193,17 @@ namespace ProjectFileTools.Completion
                 return false;
             }
 
-            string documentText = snapshot.GetText();
-            int start = documentText.LastIndexOf('<', pos);
-            int end = documentText.IndexOf('>', pos);
-            int startQuote = documentText.LastIndexOf('"', pos - 1);
-            int endQuote = documentText.IndexOf('"', pos);
-
-            if (start < 0 || end < 0 || startQuote < 0 || endQuote < 0 || startQuote < start || endQuote > end || endQuote <= startQuote)
+            if (!TryGetExtents(snapshot, pos, out string documentText, out int start, out int end, out int startQuote, out int endQuote, out int realEnd, out isHealingRequired, out string healedXml))
             {
-                isHealingRequired = false;
                 newText = null;
                 targetSpan = default(Span);
                 return false;
             }
 
-            string fragmentText = documentText.Substring(start, end - start + 1);
-
-            int healAt = documentText.IndexOf('<', start + 1);
-            bool needsHealing = healAt < end;
-            isHealingRequired = needsHealing;
-            int elementEnd = Math.Min(end, healAt);
-
-            if (needsHealing)
-            {
-                fragmentText = fragmentText.Substring(0, healAt - start);
-                string trimmedFragmentText = fragmentText.Trim();
-                elementEnd = start + trimmedFragmentText.Length;
-
-                switch (trimmedFragmentText.Last())
-                {
-                    case '"':
-                        break;
-                    default:
-                        isHealingRequired = false;
-                        newText = null;
-                        targetSpan = default(Span);
-                        return false;
-                }
-
-                int quoteCount = fragmentText.Count(x => x == '"');
-
-                if (quoteCount % 2 == 1)
-                {
-                    fragmentText += "\"";
-                }
-
-                fragmentText += "/>";
-            }
-
-            string attributeText = documentText.Substring(startQuote + 1, endQuote - startQuote - 1);
-
             XElement element;
             try
             {
-                element = XElement.Parse(fragmentText);
+                element = XElement.Parse(healedXml);
             }
             catch
             {
@@ -120,16 +221,16 @@ namespace ProjectFileTools.Completion
 
             XAttribute name = element.Attribute(XName.Get("Include"));
             XAttribute version = element.Attribute(XName.Get("Version"));
-            newText = fragmentText;
+            newText = healedXml;
 
             if (version == null)
             {
-                needsHealing = true;
+                isHealingRequired = true;
                 element.SetAttributeValue(XName.Get("Version"), "");
                 newText = element.ToString();
                 string versionString = "Version=\"";
                 pos = newText.IndexOf(versionString) + versionString.Length + start;
-                targetSpan = new Span(start, elementEnd - start);
+                targetSpan = new Span(start, realEnd - start + 1);
                 return true;
             }
 
@@ -138,7 +239,7 @@ namespace ProjectFileTools.Completion
             int proposedPos = start + quoteIndex + 1;
             bool move = pos < proposedPos;
             pos = proposedPos;
-            targetSpan = new Span(start, Math.Min(end, healAt) - start + 1);
+            targetSpan = new Span(start, realEnd - start + 1);
             return move;
         }
 
@@ -153,13 +254,7 @@ namespace ProjectFileTools.Completion
                 return false;
             }
 
-            string documentText = snapshot.GetText();
-            int start = documentText.LastIndexOf('<', pos);
-            int end = documentText.IndexOf('>', pos);
-            int startQuote = documentText.LastIndexOf('"', pos - 1);
-            int endQuote = documentText.IndexOf('"', pos);
-
-            if (start < 0 || end < 0 || startQuote < 0 || endQuote < 0 || startQuote < start || endQuote > end || endQuote <= startQuote)
+            if (!TryGetExtents(snapshot, pos, out string documentText, out int start, out int end, out int startQuote, out int endQuote, out int realEnd, out bool isHealingRequired, out string healedXml))
             {
                 span = default(Span);
                 packageName = null;
@@ -168,43 +263,10 @@ namespace ProjectFileTools.Completion
                 return false;
             }
 
-            string fragmentText = documentText.Substring(start, end - start + 1);
-
-            int healAt = documentText.IndexOf('<', start + 1);
-            bool needsHealing = healAt < end;
-
-            if (needsHealing)
-            {
-                fragmentText = fragmentText.Substring(0, healAt - start);
-
-                switch (fragmentText.Trim().Last())
-                {
-                    case '"':
-                        break;
-                    default:
-                        span = default(Span);
-                        packageName = null;
-                        packageVersion = null;
-                        completionType = null;
-                        return false;
-                }
-
-                int quoteCount = fragmentText.Count(x => x == '"');
-
-                if (quoteCount % 2 == 1)
-                {
-                    fragmentText += "\"";
-                }
-
-                fragmentText += "/>";
-            }
-
-            string attributeText = documentText.Substring(startQuote + 1, endQuote - startQuote - 1);
-
             XElement element;
             try
             {
-                element = XElement.Parse(fragmentText);
+                element = XElement.Parse(healedXml);
             }
             catch
             {
@@ -228,6 +290,7 @@ namespace ProjectFileTools.Completion
             XAttribute version = element.Attribute(XName.Get("Version"));
             string nameValue = name?.Value;
             string versionValue = version?.Value;
+            string attributeText = healedXml.Substring(startQuote + 1 - start, endQuote - startQuote - 1);
 
             if (nameValue == attributeText)
             {
@@ -263,7 +326,7 @@ namespace ProjectFileTools.Completion
             ITrackingPoint point = session.GetTriggerPoint(_textBuffer);
             int pos = point.GetPosition(snapshot);
 
-            if (_classifier.GetClassificationSpans(new SnapshotSpan(snapshot, new Span(pos, 1))).Any(x => (x.ClassificationType.Classification?.IndexOf("comment", StringComparison.OrdinalIgnoreCase) ?? -1) > -1))
+            if (pos < snapshot.Length && _classifier.GetClassificationSpans(new SnapshotSpan(snapshot, new Span(pos, 1))).Any(x => (x.ClassificationType.Classification?.IndexOf("comment", StringComparison.OrdinalIgnoreCase) ?? -1) > -1))
             {
                 return;
             }
