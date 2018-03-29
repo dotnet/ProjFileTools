@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Threading;
 using System.Xml.Linq;
 using Microsoft.VisualStudio.Imaging;
 using Microsoft.VisualStudio.Imaging.Interop;
@@ -10,6 +9,7 @@ using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
+using ProjectFileTools.Helpers;
 using ProjectFileTools.NuGetSearch;
 using ProjectFileTools.NuGetSearch.Contracts;
 using ProjectFileTools.NuGetSearch.Feeds;
@@ -29,6 +29,11 @@ namespace ProjectFileTools.Completion
         private int _pos;
         private readonly IClassifier _classifier;
         private bool _isSelfTrigger;
+        private static readonly IReadOnlyDictionary<string, string> AttributeToCompletionTypeMap = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            {"Include", "Name" },
+            {"Version", "Version" }
+        };
 
         public PackageCompletionSource(ITextBuffer textBuffer, ICompletionBroker completionBroker, IClassifierAggregatorService classifier, IPackageSearchManager searchManager)
         {
@@ -39,153 +44,11 @@ namespace ProjectFileTools.Completion
             textBuffer.Properties.AddProperty(typeof(PackageCompletionSource), this);
         }
 
-        private static bool TryGetExtents(ITextSnapshot snapshot, int pos,
-            out string documentText, out int start, out int end, out int startQuote, out int endQuote,
-            out int realEnd, out bool isHealed, out string healedXml)
-        {
-            documentText = snapshot.GetText();
-            start = pos < documentText.Length ? documentText.LastIndexOf('<', pos) : documentText.LastIndexOf('<');
-            end = pos < documentText.Length ? documentText.IndexOf('>', pos) : -1;
-            startQuote = documentText.LastIndexOf('"', pos - 1);
-            endQuote = pos < documentText.Length ? documentText.IndexOf('"', pos) : -1;
-            realEnd = end;
-
-            if (startQuote > -1 && startQuote < start || end > -1 && endQuote > end)
-            {
-                healedXml = null;
-                isHealed = false;
-                return false;
-            }
-
-            string fragmentText = null;
-            //If we managed to find a close...
-            if (end > start)
-            {
-                int nextStart = start < documentText.Length - 1 ? documentText.IndexOf('<', start + 1) : -1;
-
-                //If we found another start before the close...
-                //      <PackageReference Include="
-                //  </ItemGroup>
-                if (nextStart > -1 && nextStart < end)
-                {
-                    //Heal
-                    fragmentText = documentText.Substring(start, nextStart - start).Trim();
-                    realEnd = fragmentText.Length + start;
-
-                    switch (fragmentText[fragmentText.Length - 1])
-                    {
-                        case '\"':
-                            if (endQuote > nextStart || endQuote < 0)
-                            {
-                                endQuote = fragmentText.Length + start;
-                                fragmentText += "\"";
-                            }
-                            break;
-                        case '>':
-                            healedXml = null;
-                            isHealed = false;
-                            return false;
-                        default:
-                            //If there's a start quote in play, we're just looking at an unclosed attribute value
-                            if (startQuote > start)
-                            {
-                                endQuote = fragmentText.Length + start;
-                                fragmentText += "\"";
-                            }
-                            else
-                            {
-                                healedXml = null;
-                                isHealed = false;
-                                return false;
-                            }
-                            break;
-                    }
-
-                    end = fragmentText.Length + 2 + start;
-                    fragmentText += " />";
-                    isHealed = true;
-                }
-                //We didn't find that, so we're "good"... we might have a non-self closed tag though
-                else
-                {
-                    isHealed = false;
-
-                    //Unless of course the closing quote was after the end...
-                    if (endQuote < 0 || endQuote > end)
-                    {
-                        fragmentText = documentText.Substring(start, end - start);
-
-                        if (fragmentText.EndsWith("/"))
-                        {
-                            fragmentText = fragmentText.Substring(0, fragmentText.Length - 1);
-                        }
-
-                        fragmentText = fragmentText.TrimEnd() + "\" />";
-
-                        endQuote = fragmentText.Length - 4 + start;
-                        end = fragmentText.Length - 1 + start;
-                    }
-                    else
-                    {
-                        fragmentText = documentText.Substring(start, end - start + 1);
-                    }
-                }
-            }
-            //If we didn't find a close, if we found an end quote, that's good enough
-            else if (endQuote > start)
-            {
-                realEnd = endQuote;
-                fragmentText = documentText.Substring(start, endQuote - start + 1) + " />";
-                end = fragmentText.Length - 1 + start;
-                isHealed = true;
-            }
-            //If we didn't find an end quote even, if we found an open quote, that might be good enough
-            else if (startQuote > start)
-            {
-                //If we find a close before the cursor that's after the start quote, we're outside of the element
-                if (documentText.LastIndexOf('>', pos - 1) > startQuote)
-                {
-                    healedXml = null;
-                    isHealed = false;
-                    return false;
-                }
-
-                //Otherwise, we're presumably just after the start quote (and maybe some text) at the end of the document
-                //  we already know there's no closing quote or end, see if there's another start we can run up to
-                int nextStart = pos < documentText.Length ? documentText.IndexOf('<', pos) : -1;
-
-                //If there isn't, run off to the end of the document
-                if (nextStart < 0)
-                {
-                    fragmentText = documentText.Substring(start, documentText.Length - start).TrimEnd();
-                }
-                else
-                {
-                    fragmentText = documentText.Substring(start, nextStart - start + 1);
-                    fragmentText = fragmentText.Trim();
-                }
-
-                realEnd = start + fragmentText.Length - 1;
-                fragmentText += "\" />";
-                endQuote = fragmentText.Length - 4 + start;
-                end = fragmentText.Length - 1 + start;
-                isHealed = true;
-            }
-            //All we've got to go on is the start, that's not good enough
-            else
-            {
-                healedXml = null;
-                isHealed = false;
-                return false;
-            }
-
-            healedXml = fragmentText;
-            return true;
-        }
-
         public static bool TryHealOrAdvanceAttributeSelection(ITextSnapshot snapshot, ref int pos, out Span targetSpan, out string newText, out bool isHealingRequired)
         {
-            if (pos < 1)
+            XmlInfo info = XmlTools.GetXmlInfo(snapshot, pos);
+
+            if (info == null || !info.TryGetElement(out XElement element) || info.TagName != "PackageReference" && info.TagName != "DotNetCliToolReference")
             {
                 isHealingRequired = false;
                 newText = null;
@@ -193,36 +56,7 @@ namespace ProjectFileTools.Completion
                 return false;
             }
 
-            if (!TryGetExtents(snapshot, pos, out string documentText, out int start, out int end, out int startQuote, out int endQuote, out int realEnd, out isHealingRequired, out string healedXml))
-            {
-                newText = null;
-                targetSpan = default(Span);
-                return false;
-            }
-
-            XElement element;
-            try
-            {
-                element = XElement.Parse(healedXml);
-            }
-            catch
-            {
-                newText = null;
-                targetSpan = default(Span);
-                return false;
-            }
-
-            if (element.Name != "PackageReference" && element.Name != "DotNetCliToolReference")
-            {
-                newText = null;
-                targetSpan = default(Span);
-                return false;
-            }
-
-            XAttribute name = element.Attribute(XName.Get("Include"));
             XAttribute version = element.Attribute(XName.Get("Version"));
-            newText = healedXml;
-            string attributeText = healedXml.Substring(startQuote + 1 - start, endQuote - startQuote - 1);
 
             if (version == null)
             {
@@ -230,86 +64,48 @@ namespace ProjectFileTools.Completion
                 element.SetAttributeValue(XName.Get("Version"), "");
                 newText = element.ToString();
                 string versionString = "Version=\"";
-                pos = newText.IndexOf(versionString) + versionString.Length + start;
-                targetSpan = new Span(start, realEnd - start + 1);
+                pos = newText.IndexOf(versionString) + versionString.Length + info.TagStart;
+                targetSpan = new Span(info.TagStart, info.RealDocumentLength);
                 return true;
             }
 
-            int versionIndex = newText.IndexOf("Version");
-            int quoteIndex = newText.IndexOf('"', versionIndex);
-            int proposedPos = start + quoteIndex + 1;
-            bool move = version.Value != attributeText;
+            newText = info.ElementText;
+            isHealingRequired = info.IsModified;
+            int versionIndex = info.ElementText.IndexOf("Version");
+            int quoteIndex = info.ElementText.IndexOf('"', versionIndex);
+            int proposedPos = info.TagStart + quoteIndex + 1;
+            bool move = info.AttributeName != "Version";
             pos = proposedPos;
-            targetSpan = new Span(start, realEnd - start + 1);
+            targetSpan = new Span(info.TagStart, info.RealDocumentLength);
             return move;
+        }
+
+        public static bool TryGetPackageInfoFromXml(XmlInfo info, out string packageName, out string packageVersion)
+        {
+            if (info != null
+                && (info.TagName == "PackageReference" || info.TagName == "DotNetCliToolReference")
+                && info.AttributeName != null && AttributeToCompletionTypeMap.ContainsKey(info.AttributeName)
+                && info.TryGetElement(out XElement element))
+            {
+                XAttribute name = element.Attribute(XName.Get("Include"));
+                XAttribute version = element.Attribute(XName.Get("Version"));
+                packageName = name?.Value;
+                packageVersion = version?.Value;
+                return true;
+            }
+
+            packageName = null;
+            packageVersion = null;
+            return false;
         }
 
         public static bool IsInRangeForPackageCompletion(ITextSnapshot snapshot, int pos, out Span span, out string packageName, out string packageVersion, out string completionType)
         {
-            if (pos < 1)
-            {
-                span = default(Span);
-                packageName = null;
-                packageVersion = null;
-                completionType = null;
-                return false;
-            }
+            XmlInfo info = XmlTools.GetXmlInfo(snapshot, pos);
 
-            if (!TryGetExtents(snapshot, pos, out string documentText, out int start, out int end, out int startQuote, out int endQuote, out int realEnd, out bool isHealingRequired, out string healedXml))
+            if (TryGetPackageInfoFromXml(info, out packageName, out packageVersion) && AttributeToCompletionTypeMap.TryGetValue(info.AttributeName, out completionType))
             {
-                span = default(Span);
-                packageName = null;
-                packageVersion = null;
-                completionType = null;
-                return false;
-            }
-
-            XElement element;
-            try
-            {
-                element = XElement.Parse(healedXml);
-            }
-            catch
-            {
-                span = default(Span);
-                packageName = null;
-                packageVersion = null;
-                completionType = null;
-                return false;
-            }
-
-            if (element.Name != "PackageReference" && element.Name != "DotNetCliToolReference")
-            {
-                span = default(Span);
-                packageName = null;
-                packageVersion = null;
-                completionType = null;
-                return false;
-            }
-
-            XAttribute name = element.Attribute(XName.Get("Include"));
-            XAttribute version = element.Attribute(XName.Get("Version"));
-            string nameValue = name?.Value;
-            string versionValue = version?.Value;
-            string attributeText = healedXml.Substring(startQuote + 1 - start, endQuote - startQuote - 1);
-
-            if (nameValue == attributeText)
-            {
-                //Package name completion
-                completionType = "Name";
-                packageName = nameValue;
-                packageVersion = versionValue;
-                span = new Span(startQuote + 1, endQuote - startQuote - 1);
-                return true;
-            }
-
-            if (versionValue == attributeText)
-            {
-                //Package version completion
-                completionType = "Version";
-                packageName = nameValue;
-                packageVersion = versionValue;
-                span = new Span(startQuote + 1, endQuote - startQuote - 1);
+                span = new Span(info.AttributeValueStart, info.AttributeValueLength);
                 return true;
             }
 
