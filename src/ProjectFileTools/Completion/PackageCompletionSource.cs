@@ -39,6 +39,109 @@ namespace ProjectFileTools.Completion
             textBuffer.Properties.AddProperty(typeof(PackageCompletionSource), this);
         }
 
+        public static bool TryHealOrAdvanceAttributeSelection(ITextSnapshot snapshot, ref int pos, out Span targetSpan, out string newText, out bool isHealingRequired)
+        {
+            if (pos < 1)
+            {
+                isHealingRequired = false;
+                newText = null;
+                targetSpan = default(Span);
+                return false;
+            }
+
+            string documentText = snapshot.GetText();
+            int start = documentText.LastIndexOf('<', pos);
+            int end = documentText.IndexOf('>', pos);
+            int startQuote = documentText.LastIndexOf('"', pos - 1);
+            int endQuote = documentText.IndexOf('"', pos);
+
+            if (start < 0 || end < 0 || startQuote < 0 || endQuote < 0 || startQuote < start || endQuote > end || endQuote <= startQuote)
+            {
+                isHealingRequired = false;
+                newText = null;
+                targetSpan = default(Span);
+                return false;
+            }
+
+            string fragmentText = documentText.Substring(start, end - start + 1);
+
+            int healAt = documentText.IndexOf('<', start + 1);
+            bool needsHealing = healAt < end;
+            isHealingRequired = needsHealing;
+            int elementEnd = Math.Min(end, healAt);
+
+            if (needsHealing)
+            {
+                fragmentText = fragmentText.Substring(0, healAt - start);
+                string trimmedFragmentText = fragmentText.Trim();
+                elementEnd = start + trimmedFragmentText.Length;
+
+                switch (trimmedFragmentText.Last())
+                {
+                    case '"':
+                        break;
+                    default:
+                        isHealingRequired = false;
+                        newText = null;
+                        targetSpan = default(Span);
+                        return false;
+                }
+
+                int quoteCount = fragmentText.Count(x => x == '"');
+
+                if (quoteCount % 2 == 1)
+                {
+                    fragmentText += "\"";
+                }
+
+                fragmentText += "/>";
+            }
+
+            string attributeText = documentText.Substring(startQuote + 1, endQuote - startQuote - 1);
+
+            XElement element;
+            try
+            {
+                element = XElement.Parse(fragmentText);
+            }
+            catch
+            {
+                newText = null;
+                targetSpan = default(Span);
+                return false;
+            }
+
+            if (element.Name != "PackageReference" && element.Name != "DotNetCliToolReference")
+            {
+                newText = null;
+                targetSpan = default(Span);
+                return false;
+            }
+
+            XAttribute name = element.Attribute(XName.Get("Include"));
+            XAttribute version = element.Attribute(XName.Get("Version"));
+            newText = fragmentText;
+
+            if (version == null)
+            {
+                needsHealing = true;
+                element.SetAttributeValue(XName.Get("Version"), "");
+                newText = element.ToString();
+                string versionString = "Version=\"";
+                pos = newText.IndexOf(versionString) + versionString.Length + start;
+                targetSpan = new Span(start, elementEnd - start);
+                return true;
+            }
+
+            int versionIndex = newText.IndexOf("Version");
+            int quoteIndex = newText.IndexOf('"', versionIndex);
+            int proposedPos = start + quoteIndex + 1;
+            bool move = pos < proposedPos;
+            pos = proposedPos;
+            targetSpan = new Span(start, Math.Min(end, healAt) - start + 1);
+            return move;
+        }
+
         public static bool IsInRangeForPackageCompletion(ITextSnapshot snapshot, int pos, out Span span, out string packageName, out string packageVersion, out string completionType)
         {
             if(pos < 1)

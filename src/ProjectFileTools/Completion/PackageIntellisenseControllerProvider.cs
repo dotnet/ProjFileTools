@@ -27,15 +27,7 @@ namespace ProjectFileTools.Completion
 
         public IIntellisenseController TryCreateIntellisenseController(ITextView textView, IList<ITextBuffer> subjectBuffers)
         {
-            string text = textView.TextBuffer.CurrentSnapshot.GetText();
-            bool isCore = text.IndexOf("Microsoft.Net.Sdk", StringComparison.OrdinalIgnoreCase) > -1;
-
-            if (isCore)
-            {
-                return new PackageIntellisenseController(textView, subjectBuffers, CompletionBroker);
-            }
-
-            return null;
+            return new PackageIntellisenseController(textView, subjectBuffers, CompletionBroker);
         }
     }
 }
