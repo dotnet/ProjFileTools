@@ -234,7 +234,7 @@ namespace ProjectFileTools.Completion
                     break;
             }
 
-            _currentCompletionSet = _currentSession.CompletionSets.FirstOrDefault(x => x is PackageCompletionSet) as PackageCompletionSet;
+            _currentCompletionSet = _currentSession.IsDismissed ? null : _currentSession.CompletionSets.FirstOrDefault(x => x is PackageCompletionSet) as PackageCompletionSet;
 
             bool newCompletionSet = _currentCompletionSet == null;
             if (newCompletionSet)
@@ -254,7 +254,7 @@ namespace ProjectFileTools.Completion
             //If we're not part of an existing session & the results have already been
             //  finalized and those results assert that no packages match, show that
             //  there is no such package/version
-            if (!session.CompletionSets.Any(x => x is PackageCompletionSet))
+            if (!session.IsDismissed && !session.CompletionSets.Any(x => x is PackageCompletionSet))
             {
                 if (((_nameSearchJob != null && _nameSearchJob.RemainingFeeds.Count == 0)
                     || (_versionSearchJob != null && _versionSearchJob.RemainingFeeds.Count == 0))
@@ -331,60 +331,59 @@ namespace ProjectFileTools.Completion
             _currentCompletionSet.AccessibleCompletions.AddRange(completions);
         }
 
-        private void UpdateCompletions(object sender, EventArgs e)
+        private async void UpdateCompletions(object sender, EventArgs e)
         {
-            ThreadHelper.Generic.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            try
             {
-                try
+                if (_currentCompletionSet == null || _currentSession == null)
                 {
-                    if (_currentCompletionSet == null || _currentSession == null)
-                    {
-                        return;
-                    }
+                    return;
+                }
 
-                    string displayText = _currentCompletionSet?.SelectionStatus?.Completion?.DisplayText;
+                string displayText = _currentCompletionSet?.SelectionStatus?.Completion?.DisplayText;
 
-                    if (_nameSearchJob != null)
-                    {
-                        ProduceNameCompletionSet();
-                    }
-                    else if (_versionSearchJob != null)
-                    {
-                        ProduceVersionCompletionSet();
-                    }
+                if (_nameSearchJob != null)
+                {
+                    ProduceNameCompletionSet();
+                }
+                else if (_versionSearchJob != null)
+                {
+                    ProduceVersionCompletionSet();
+                }
 
-                    if (!_currentSession.IsStarted && _currentCompletionSet.Completions.Count > 0)
-                    {
-                        _isSelfTrigger = true;
-                        _currentSession = _completionBroker.CreateCompletionSession(_currentSession.TextView, _currentSession.GetTriggerPoint(_textBuffer), true);
-                        _currentSession.Start();
-                    }
+                if (!_currentSession.IsStarted && _currentCompletionSet.Completions.Count > 0)
+                {
+                    _isSelfTrigger = true;
+                    _currentSession = _completionBroker.CreateCompletionSession(_currentSession.TextView, _currentSession.GetTriggerPoint(_textBuffer), true);
+                    _currentSession.Start();
+                }
 
-                    if (!_currentSession.IsDismissed)
-                    {
-                        _currentSession.Filter();
+                if (!_currentSession.IsDismissed)
+                {
+                    _currentSession.Filter();
 
-                        if (displayText != null)
+                    if (displayText != null)
+                    {
+                        foreach (Microsoft.VisualStudio.Language.Intellisense.Completion completion in _currentSession.SelectedCompletionSet.Completions)
                         {
-                            foreach (Microsoft.VisualStudio.Language.Intellisense.Completion completion in _currentSession.SelectedCompletionSet.Completions)
+                            if (completion.DisplayText == displayText)
                             {
-                                if (completion.DisplayText == displayText)
-                                {
-                                    _currentCompletionSet.SelectionStatus = new CompletionSelectionStatus(completion, true, true);
-                                    break;
-                                }
+                                _currentCompletionSet.SelectionStatus = new CompletionSelectionStatus(completion, true, true);
+                                break;
                             }
                         }
-
-                        //_currentSession.Dismiss();
-                        //_currentSession = _completionBroker.TriggerCompletion(_currentSession.TextView);
                     }
+
+                    //_currentSession.Dismiss();
+                    //_currentSession = _completionBroker.TriggerCompletion(_currentSession.TextView);
                 }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.ToString());
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
         }
 
         public void Dispose()

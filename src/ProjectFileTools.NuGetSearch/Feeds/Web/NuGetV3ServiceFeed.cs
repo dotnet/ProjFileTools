@@ -49,6 +49,11 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
 
         private async Task<JObject> ExecuteAutocompleteServiceQueryAsync(List<string> endpoints, Func<string, string> query, CancellationToken cancellationToken)
         {
+            if (endpoints == null)
+            {
+                return null;
+            }
+
             for (int i = 0; i < endpoints.Count; ++i)
             {
                 string endpoint = endpoints[0];
@@ -132,7 +137,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
         {
             List<string> endpoints = new List<string>();
 
-            JArray resourcesArray = document["resources"] as JArray;
+            JArray resourcesArray = document?["resources"] as JArray;
 
             if (resourcesArray == null)
             {
@@ -337,12 +342,19 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
         private static IReadOnlyList<string> GetDataFromNuGetV3CompatibleQueryResult(JObject document)
         {
             List<string> results = new List<string>();
-            JArray resultsArray = document["data"] as JArray;
 
-            foreach (JToken curResult in resultsArray)
+            if (document != null)
             {
-                string curPackageId = curResult.ToString();
-                results.Add(curPackageId);
+                JArray resultsArray = document["data"] as JArray;
+
+                if (resultsArray != null)
+                {
+                    foreach (JToken curResult in resultsArray)
+                    {
+                        string curPackageId = curResult.ToString();
+                        results.Add(curPackageId);
+                    }
+                }
             }
 
             return results.AsReadOnly();
