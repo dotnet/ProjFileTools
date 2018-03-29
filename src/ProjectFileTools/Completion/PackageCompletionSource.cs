@@ -39,7 +39,7 @@ namespace ProjectFileTools.Completion
             textBuffer.Properties.AddProperty(typeof(PackageCompletionSource), this);
         }
 
-        private static bool TryGetExtents(ITextSnapshot snapshot, int pos, 
+        private static bool TryGetExtents(ITextSnapshot snapshot, int pos,
             out string documentText, out int start, out int end, out int startQuote, out int endQuote,
             out int realEnd, out bool isHealed, out string healedXml)
         {
@@ -222,6 +222,7 @@ namespace ProjectFileTools.Completion
             XAttribute name = element.Attribute(XName.Get("Include"));
             XAttribute version = element.Attribute(XName.Get("Version"));
             newText = healedXml;
+            string attributeText = healedXml.Substring(startQuote + 1 - start, endQuote - startQuote - 1);
 
             if (version == null)
             {
@@ -237,7 +238,7 @@ namespace ProjectFileTools.Completion
             int versionIndex = newText.IndexOf("Version");
             int quoteIndex = newText.IndexOf('"', versionIndex);
             int proposedPos = start + quoteIndex + 1;
-            bool move = pos < proposedPos;
+            bool move = version.Value != attributeText;
             pos = proposedPos;
             targetSpan = new Span(start, realEnd - start + 1);
             return move;
@@ -245,7 +246,7 @@ namespace ProjectFileTools.Completion
 
         public static bool IsInRangeForPackageCompletion(ITextSnapshot snapshot, int pos, out Span span, out string packageName, out string packageVersion, out string completionType)
         {
-            if(pos < 1)
+            if (pos < 1)
             {
                 span = default(Span);
                 packageName = null;
@@ -344,7 +345,7 @@ namespace ProjectFileTools.Completion
             if (_isSelfTrigger)
             {
                 _isSelfTrigger = false;
-                if(_currentCompletionSet != null)
+                if (_currentCompletionSet != null)
                 {
                     completionSets.Add(_currentCompletionSet);
                 }
@@ -438,9 +439,9 @@ namespace ProjectFileTools.Completion
             List<Microsoft.VisualStudio.Language.Intellisense.Completion> completions = new List<Microsoft.VisualStudio.Language.Intellisense.Completion>();
             Dictionary<string, FeedKind> packageLookup = new Dictionary<string, FeedKind>();
 
-            foreach(Tuple<string, FeedKind> info in _nameSearchJob.Results)
+            foreach (Tuple<string, FeedKind> info in _nameSearchJob.Results)
             {
-                if(!packageLookup.TryGetValue(info.Item1, out FeedKind existingInfo) || info.Item2 == FeedKind.Local)
+                if (!packageLookup.TryGetValue(info.Item1, out FeedKind existingInfo) || info.Item2 == FeedKind.Local)
                 {
                     packageLookup[info.Item1] = info.Item2;
                 }
