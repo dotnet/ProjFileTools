@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using EnvDTE;
 using FarTestProvider;
@@ -13,6 +14,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using ProjectFileTools.Completion;
+using ProjectFileTools.Helpers;
 using ProjectFileTools.MSBuild;
 using ProjectFileTools.NuGetSearch.Contracts;
 
@@ -21,12 +23,15 @@ namespace ProjectFileTools
     internal class GotoDefinitionController : IOleCommandTarget
     {
         private readonly Guid _vSStd97CmdIDGuid;
+        private readonly Guid _vSStd2kCmdIDGuid;
         private readonly IWorkspaceManager _workspaceManager;
+        private const long EditProjectFileCommandId = 1632;
 
         private GotoDefinitionController(IWpfTextView textview, IWorkspaceManager workspaceManager)
         {
             TextView = textview;
-            _vSStd97CmdIDGuid = new Guid("5EFC7975-14BC-11CF-9B2B-00AA00573819");
+            _vSStd97CmdIDGuid = new Guid(VSConstants.CMDSETID.StandardCommandSet97_string);
+            _vSStd2kCmdIDGuid = new Guid(VSConstants.CMDSETID.StandardCommandSet2K_string);
             _workspaceManager = workspaceManager;
         }
 
@@ -38,10 +43,21 @@ namespace ProjectFileTools
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            if (pguidCmdGroup == _vSStd97CmdIDGuid && cCmds == (uint)VSConstants.VSStd97CmdID.GotoDefn)
+            if (pguidCmdGroup == _vSStd97CmdIDGuid && cCmds > 0 && prgCmds[0].cmdID == (uint)VSConstants.VSStd97CmdID.GotoDefn)
             {
-                prgCmds[0].cmdf = (uint)OLECMDF.OLECMDF_SUPPORTED;
+                prgCmds[0].cmdf = (uint)(OLECMDF.OLECMDF_SUPPORTED | OLECMDF.OLECMDF_ENABLED);
                 return VSConstants.S_OK;
+            }
+
+            if (pguidCmdGroup == _vSStd97CmdIDGuid && cCmds > 0 && prgCmds[0].cmdID == (uint)VSConstants.VSStd97CmdID.FindReferences)
+            {
+                TextView.TextBuffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDoc);
+                XmlInfo info = XmlTools.GetXmlInfo(TextView.TextSnapshot, TextView.Caret.Position.BufferPosition.Position);
+                if (info != null)
+                {
+                    prgCmds[0].cmdf = (uint)(OLECMDF.OLECMDF_SUPPORTED | OLECMDF.OLECMDF_ENABLED);
+                    return VSConstants.S_OK;
+                }
             }
 
             return Next?.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText) ?? (int)Microsoft.VisualStudio.OLE.Interop.Constants.OLECMDERR_E_NOTSUPPORTED;
@@ -86,20 +102,121 @@ namespace ProjectFileTools
         public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            if (pguidCmdGroup == _vSStd97CmdIDGuid && nCmdID == (uint)VSConstants.VSStd97CmdID.GotoDefn)
+            if (pguidCmdGroup == _vSStd97CmdIDGuid && nCmdID == (uint)VSConstants.VSStd97CmdID.FindReferences)
             {
-                TextView.TextBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out ITextDocument textDoc);
+                TextView.TextBuffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDoc);
 
-                if (PackageCompletionSource.IsInRangeForPackageCompletion(TextView.TextSnapshot, TextView.Caret.Position.BufferPosition.Position, out Span targetSpan, out string packageName, out string packageVersion, out string completionType))
+                XmlInfo info = XmlTools.GetXmlInfo(TextView.TextSnapshot, TextView.Caret.Position.BufferPosition.Position);
+                IVsTextBuffer buffer;
+                string thisFileName;
+                IPersistFileFormat persistFile;
+                IWorkspace workspace;
+
+                if (info != null)
                 {
-                    if(PackageExistsOnNuGet(packageName, packageVersion, out string url))
+                    if ((info.AttributeName == "Include" || info.AttributeName == "Update" || info.AttributeName == "Exclude" || info.AttributeName == "Remove")
+                        && TextView.TextBuffer.Properties.TryGetProperty(typeof(IVsTextBuffer), out buffer)
+                        && (persistFile = buffer as IPersistFileFormat) != null
+                        && VSConstants.S_OK == persistFile.GetCurFile(out thisFileName, out _))
                     {
-                        System.Diagnostics.Process.Start(url);
-                        return VSConstants.S_OK;
+                        string relativePath = info.AttributeValue;
+                        workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
+                        List<Definition> matchedItems = workspace.GetItems(relativePath);
+
+                        if (matchedItems.Count == 1)
+                        {
+                            string absolutePath = Path.Combine(Path.GetDirectoryName(thisFileName), matchedItems[0].File);
+                            FileInfo fileInfo = new FileInfo(absolutePath);
+
+                            if (fileInfo.Exists)
+                            {
+                                ServiceUtil.DTE.ItemOperations.OpenFile(fileInfo.FullName);
+                                return VSConstants.S_OK;
+                            }
+                        }
+
+                        return ShowInFar(matchedItems);
                     }
                 }
 
-                IWorkspace workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
+            }
+            else if (pguidCmdGroup == _vSStd97CmdIDGuid && nCmdID == (uint)VSConstants.VSStd97CmdID.GotoDefn)
+            {
+                TextView.TextBuffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDoc);
+
+                XmlInfo info = XmlTools.GetXmlInfo(TextView.TextSnapshot, TextView.Caret.Position.BufferPosition.Position);
+                IVsTextBuffer buffer;
+                string thisFileName;
+                IPersistFileFormat persistFile;
+                IWorkspace workspace;
+
+                if (info != null)
+                {
+                    switch (info.TagName)
+                    {
+                        case "ProjectReference":
+                            if (info.AttributeName == "Include"
+                                && TextView.TextBuffer.Properties.TryGetProperty(typeof(IVsTextBuffer), out buffer)
+                                && (persistFile = buffer as IPersistFileFormat) != null
+                                && VSConstants.S_OK == persistFile.GetCurFile(out thisFileName, out _))
+                            {
+                                string relativePath = info.AttributeValue;
+                                workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
+                                List<Definition> matchedItems = workspace.GetItems(relativePath);
+
+                                if (matchedItems.Count == 1)
+                                {
+                                    string absolutePath = Path.Combine(Path.GetDirectoryName(thisFileName), matchedItems[0].File);
+                                    FileInfo fileInfo = new FileInfo(absolutePath);
+                                    if (fileInfo.Exists)
+                                    {
+                                        ServiceUtil.DTE.ItemOperations.OpenFile(fileInfo.FullName);
+                                        return VSConstants.S_OK;
+                                        //ServiceUtil.DTE.Commands.Raise(VSConstants.CMDSETID.StandardCommandSet2K_string, (int)EditProjectFileCommandId, ref unusedArgs, ref unusedArgs);
+                                    }
+                                }
+                            }
+
+                            break;
+                        case "PackageReference":
+                        case "DotNetCliToolReference":
+                            if (PackageCompletionSource.TryGetPackageInfoFromXml(info, out string packageName, out string packageVersion) && PackageExistsOnNuGet(packageName, packageVersion, out string url))
+                            {
+                                System.Diagnostics.Process.Start(url);
+                                return VSConstants.S_OK;
+                            }
+                            break;
+                        default:
+                            if ((info.AttributeName == "Include" || info.AttributeName == "Update" || info.AttributeName == "Exclude" || info.AttributeName == "Remove")
+                                && TextView.TextBuffer.Properties.TryGetProperty(typeof(IVsTextBuffer), out buffer)
+                                && (persistFile = buffer as IPersistFileFormat) != null
+                                && VSConstants.S_OK == persistFile.GetCurFile(out thisFileName, out _))
+                            {
+                                string relativePath = info.AttributeValue;
+                                workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
+                                List<Definition> matchedItems = workspace.GetItemProvenance(relativePath);
+
+                                if (matchedItems.Count == 1)
+                                {
+                                    string absolutePath = Path.Combine(Path.GetDirectoryName(thisFileName), matchedItems[0].File);
+                                    FileInfo fileInfo = new FileInfo(absolutePath);
+
+                                    if (fileInfo.Exists)
+                                    {
+                                        ServiceUtil.DTE.ItemOperations.OpenFile(fileInfo.FullName);
+                                        return VSConstants.S_OK;
+                                    }
+                                }
+
+                                return ShowInFar(matchedItems);
+                            }
+
+                            break;
+
+                    }
+                }
+
+                workspace = _workspaceManager.GetWorkspace(textDoc.FilePath);
                 List<Definition> definitions = workspace.ResolveDefinition(textDoc.FilePath, TextView.TextSnapshot.GetText(), TextView.Caret.Position.BufferPosition.Position);
 
                 if (definitions.Count == 1)
@@ -122,24 +239,29 @@ namespace ProjectFileTools
 
                 else if (definitions.Count > 1)
                 {
-                    IFindAllReferencesService farService = ServiceUtil.GetService<SVsFindAllReferences, IFindAllReferencesService>();
-                    FarDataSource dataSource = new FarDataSource(1);
-                    dataSource.Snapshots[0] = new FarDataSnapshot(definitions);
-
-                    IFindAllReferencesWindow farWindow = farService.StartSearch(definitions[0].Type);
-                    ITableManager _farManager = farWindow.Manager;
-                    _farManager.AddSource(dataSource);
-
-                    dataSource.Sink.IsStable = false;
-                    dataSource.Sink.AddSnapshot(dataSource.Snapshots[0]);
-                    dataSource.Sink.IsStable = true;
-
-                    return VSConstants.S_OK;
+                    return ShowInFar(definitions);
                 }
 
             }
 
             return Next?.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut) ?? (int)Microsoft.VisualStudio.OLE.Interop.Constants.OLECMDERR_E_NOTSUPPORTED;
+        }
+
+        private int ShowInFar(List<Definition> definitions)
+        {
+            IFindAllReferencesService farService = ServiceUtil.GetService<SVsFindAllReferences, IFindAllReferencesService>();
+            FarDataSource dataSource = new FarDataSource(1);
+            dataSource.Snapshots[0] = new FarDataSnapshot(definitions);
+
+            IFindAllReferencesWindow farWindow = farService.StartSearch(definitions[0].Type);
+            ITableManager _farManager = farWindow.Manager;
+            _farManager.AddSource(dataSource);
+
+            dataSource.Sink.IsStable = false;
+            dataSource.Sink.AddSnapshot(dataSource.Snapshots[0]);
+            dataSource.Sink.IsStable = true;
+
+            return VSConstants.S_OK;
         }
 
         internal static GotoDefinitionController CreateAndRegister(IWpfTextView textview, IWorkspaceManager workspaceManager, IVsTextView textViewAdapter)

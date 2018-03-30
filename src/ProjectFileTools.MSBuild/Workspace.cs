@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Threading;
+using System.Xml;
 using Microsoft;
 using Microsoft.Build.Construction;
 using Microsoft.Build.Evaluation;
@@ -19,6 +22,7 @@ namespace ProjectFileTools.MSBuild
         private HashSet<string> _containedFiles;
         private List<FileSystemWatcher> _watchers;
         private bool _needsReload;
+        private PropertyInfo ProjectItemElementXmlElementProperty = typeof(ProjectElement).GetProperty("XmlElement", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public bool IsDisposed { get; private set; }
 
@@ -39,6 +43,65 @@ namespace ProjectFileTools.MSBuild
             {
                 _project = null;
             }
+        }
+
+        private List<string> GetPathsFromFileSpec(string fileSpec)
+        {
+            IList<ProjectItem> items = _project.AddItem("___TEMPORARY___", fileSpec);
+            _project.RemoveItems(items);
+            List<string> files = new List<string>();
+
+            foreach (ProjectItem item in items)
+            {
+                files.Add(item.EvaluatedInclude);
+            }
+
+            return files;
+        }
+
+        public List<Definition> GetItems(string fileSpec)
+        {
+            List<string> items = GetPathsFromFileSpec(fileSpec);
+            List<Definition> results = new List<Definition>();
+            string projectName = Path.GetFileNameWithoutExtension(_project.FullPath);
+
+            foreach (string item in items)
+            {
+                bool isIncluded = _project.GetItemsByEvaluatedInclude(item).Any();
+                string message = isIncluded ? "Included" : "Not Included";
+                results.Add(new Definition(item, projectName, message, "(Glob Match)"));
+            }
+
+            return results;
+        }
+
+        public List<Definition> GetItemProvenance(string fileSpec)
+        {
+            List<string> items = GetPathsFromFileSpec(fileSpec);
+            List<Definition> results = new List<Definition>();
+            XmlDocument doc = new XmlDocument();
+
+            foreach (string item in items)
+            {
+                foreach (ProjectItem include in _project.GetItemsByEvaluatedInclude(item))
+                {
+                    foreach (ProvenanceResult record in _project.GetItemProvenance(include))
+                    {
+                        XmlElement element = (XmlElement)ProjectItemElementXmlElementProperty.GetValue(record.ItemElement);
+                        XmlElement clone = doc.CreateElement(element.LocalName);
+
+                        foreach (XmlAttribute node in element.Attributes.OfType<XmlAttribute>().ToList())
+                        {
+                            clone.SetAttribute(node.LocalName, node.Value);
+                        }
+                        
+                        string lineText = clone.OuterXml;
+                        results.Add(new Definition(record.ItemElement.ContainingProject.FullPath, include.EvaluatedInclude, record.Operation.ToString(), lineText, record.ItemElement.Location.Line, record.ItemElement.Location.Column));
+                    }
+                }
+            }
+
+            return results;
         }
 
         /// <summary>
