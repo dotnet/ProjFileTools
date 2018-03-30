@@ -295,5 +295,15 @@ namespace ProjectFileTools.MSBuild
                 }
             }
         }
+
+        public string GetEvaluatedPropertyValue(string text)
+        {
+            return _project.ExpandString(text);
+        }
+
+        public bool EvaluateCondition(string text)
+        {
+            return _project.CreateProjectInstance().EvaluateCondition(text);
+        }
     }
 }
