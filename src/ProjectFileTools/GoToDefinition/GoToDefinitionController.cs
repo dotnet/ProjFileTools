@@ -135,7 +135,7 @@ namespace ProjectFileTools
                             }
                         }
 
-                        return ShowInFar(matchedItems);
+                        return ShowInFar("Files Matching Glob", matchedItems);
                     }
                 }
 
@@ -208,7 +208,9 @@ namespace ProjectFileTools
                                     }
                                 }
 
-                                return ShowInFar(matchedItems);
+                                //Don't return the result of show in find all references, the caret may also be in a symbol,
+                                //  where we'd also want to go to that definition
+                                ShowInFar("Item Provenance", matchedItems);
                             }
 
                             break;
@@ -239,7 +241,7 @@ namespace ProjectFileTools
 
                 else if (definitions.Count > 1)
                 {
-                    return ShowInFar(definitions);
+                    return ShowInFar("Symbol Definition", definitions);
                 }
 
             }
@@ -247,13 +249,13 @@ namespace ProjectFileTools
             return Next?.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut) ?? (int)Microsoft.VisualStudio.OLE.Interop.Constants.OLECMDERR_E_NOTSUPPORTED;
         }
 
-        private int ShowInFar(List<Definition> definitions)
+        private int ShowInFar(string title, List<Definition> definitions)
         {
             IFindAllReferencesService farService = ServiceUtil.GetService<SVsFindAllReferences, IFindAllReferencesService>();
             FarDataSource dataSource = new FarDataSource(1);
             dataSource.Snapshots[0] = new FarDataSnapshot(definitions);
 
-            IFindAllReferencesWindow farWindow = farService.StartSearch(definitions[0].Type);
+            IFindAllReferencesWindow farWindow = farService.StartSearch(title);
             ITableManager _farManager = farWindow.Manager;
             _farManager.AddSource(dataSource);
 

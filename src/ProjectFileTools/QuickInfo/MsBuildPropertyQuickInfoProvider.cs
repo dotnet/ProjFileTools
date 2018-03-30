@@ -83,6 +83,11 @@ namespace ProjectFileTools.QuickInfo
                             Debug.Fail(ex.ToString());
                         }
                     }
+                    else
+                    {
+                        evaluatedValue = $"Value(s):\n    {string.Join("\n    ", evaluatedValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))}";
+                        return Task.FromResult(new QuickInfoItem(target, evaluatedValue));
+                    }
                 }
             }
 
