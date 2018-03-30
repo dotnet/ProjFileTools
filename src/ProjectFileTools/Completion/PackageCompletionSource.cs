@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Threading;
 using System.Xml.Linq;
 using Microsoft.VisualStudio.Imaging;
 using Microsoft.VisualStudio.Imaging.Interop;
@@ -10,6 +9,7 @@ using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
+using ProjectFileTools.Helpers;
 using ProjectFileTools.NuGetSearch;
 using ProjectFileTools.NuGetSearch.Contracts;
 using ProjectFileTools.NuGetSearch.Feeds;
@@ -29,6 +29,11 @@ namespace ProjectFileTools.Completion
         private int _pos;
         private readonly IClassifier _classifier;
         private bool _isSelfTrigger;
+        private static readonly IReadOnlyDictionary<string, string> AttributeToCompletionTypeMap = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            {"Include", "Name" },
+            {"Version", "Version" }
+        };
 
         public PackageCompletionSource(ITextBuffer textBuffer, ICompletionBroker completionBroker, IClassifierAggregatorService classifier, IPackageSearchManager searchManager)
         {
@@ -39,110 +44,68 @@ namespace ProjectFileTools.Completion
             textBuffer.Properties.AddProperty(typeof(PackageCompletionSource), this);
         }
 
-        public static bool IsInRangeForPackageCompletion(ITextSnapshot snapshot, int pos, out Span span, out string packageName, out string packageVersion, out string completionType)
+        public static bool TryHealOrAdvanceAttributeSelection(ITextSnapshot snapshot, ref int pos, out Span targetSpan, out string newText, out bool isHealingRequired)
         {
-            if(pos < 1)
+            XmlInfo info = XmlTools.GetXmlInfo(snapshot, pos);
+
+            if (info == null || !info.TryGetElement(out XElement element) || info.TagName != "PackageReference" && info.TagName != "DotNetCliToolReference")
             {
-                span = default(Span);
-                packageName = null;
-                packageVersion = null;
-                completionType = null;
+                isHealingRequired = false;
+                newText = null;
+                targetSpan = default(Span);
                 return false;
             }
 
-            string documentText = snapshot.GetText();
-            int start = documentText.LastIndexOf('<', pos);
-            int end = documentText.IndexOf('>', pos);
-            int startQuote = documentText.LastIndexOf('"', pos - 1);
-            int endQuote = documentText.IndexOf('"', pos);
-
-            if (start < 0 || end < 0 || startQuote < 0 || endQuote < 0 || startQuote < start || endQuote > end || endQuote <= startQuote)
-            {
-                span = default(Span);
-                packageName = null;
-                packageVersion = null;
-                completionType = null;
-                return false;
-            }
-
-            string fragmentText = documentText.Substring(start, end - start + 1);
-
-            int healAt = documentText.IndexOf('<', start + 1);
-            bool needsHealing = healAt < end;
-
-            if (needsHealing)
-            {
-                fragmentText = fragmentText.Substring(0, healAt - start);
-
-                switch (fragmentText.Trim().Last())
-                {
-                    case '"':
-                        break;
-                    default:
-                        span = default(Span);
-                        packageName = null;
-                        packageVersion = null;
-                        completionType = null;
-                        return false;
-                }
-
-                int quoteCount = fragmentText.Count(x => x == '"');
-
-                if (quoteCount % 2 == 1)
-                {
-                    fragmentText += "\"";
-                }
-
-                fragmentText += "/>";
-            }
-
-            string attributeText = documentText.Substring(startQuote + 1, endQuote - startQuote - 1);
-
-            XElement element;
-            try
-            {
-                element = XElement.Parse(fragmentText);
-            }
-            catch
-            {
-                span = default(Span);
-                packageName = null;
-                packageVersion = null;
-                completionType = null;
-                return false;
-            }
-
-            if (element.Name != "PackageReference" && element.Name != "DotNetCliToolReference")
-            {
-                span = default(Span);
-                packageName = null;
-                packageVersion = null;
-                completionType = null;
-                return false;
-            }
-
-            XAttribute name = element.Attribute(XName.Get("Include"));
             XAttribute version = element.Attribute(XName.Get("Version"));
-            string nameValue = name?.Value;
-            string versionValue = version?.Value;
 
-            if (nameValue == attributeText)
+            if (version == null)
             {
-                //Package name completion
-                completionType = "Name";
-                packageName = nameValue;
-                packageVersion = versionValue;
-                span = new Span(startQuote + 1, endQuote - startQuote - 1);
+                isHealingRequired = true;
+                element.SetAttributeValue(XName.Get("Version"), "");
+                newText = element.ToString();
+                string versionString = "Version=\"";
+                pos = newText.IndexOf(versionString) + versionString.Length + info.TagStart;
+                targetSpan = new Span(info.TagStart, info.RealDocumentLength);
                 return true;
             }
 
-            if (versionValue == attributeText)
+            newText = info.ElementText;
+            isHealingRequired = info.IsModified;
+            int versionIndex = info.ElementText.IndexOf("Version");
+            int quoteIndex = info.ElementText.IndexOf('"', versionIndex);
+            int proposedPos = info.TagStart + quoteIndex + 1;
+            bool move = info.AttributeName != "Version";
+            pos = proposedPos;
+            targetSpan = new Span(info.TagStart, info.RealDocumentLength);
+            return move;
+        }
+
+        public static bool TryGetPackageInfoFromXml(XmlInfo info, out string packageName, out string packageVersion)
+        {
+            if (info != null
+                && (info.TagName == "PackageReference" || info.TagName == "DotNetCliToolReference")
+                && info.AttributeName != null && AttributeToCompletionTypeMap.ContainsKey(info.AttributeName)
+                && info.TryGetElement(out XElement element))
             {
-                //Package version completion
-                completionType = "Version";
-                packageName = nameValue;
-                packageVersion = versionValue;
-                span = new Span(startQuote + 1, endQuote - startQuote - 1);
+                XAttribute name = element.Attribute(XName.Get("Include"));
+                XAttribute version = element.Attribute(XName.Get("Version"));
+                packageName = name?.Value;
+                packageVersion = version?.Value;
+                return true;
+            }
+
+            packageName = null;
+            packageVersion = null;
+            return false;
+        }
+
+        public static bool IsInRangeForPackageCompletion(ITextSnapshot snapshot, int pos, out Span span, out string packageName, out string packageVersion, out string completionType)
+        {
+            XmlInfo info = XmlTools.GetXmlInfo(snapshot, pos);
+
+            if (TryGetPackageInfoFromXml(info, out packageName, out packageVersion) && AttributeToCompletionTypeMap.TryGetValue(info.AttributeName, out completionType))
+            {
+                span = new Span(info.AttributeValueStart, info.AttributeValueLength);
                 return true;
             }
 
@@ -160,7 +123,7 @@ namespace ProjectFileTools.Completion
             ITrackingPoint point = session.GetTriggerPoint(_textBuffer);
             int pos = point.GetPosition(snapshot);
 
-            if (_classifier.GetClassificationSpans(new SnapshotSpan(snapshot, new Span(pos, 1))).Any(x => (x.ClassificationType.Classification?.IndexOf("comment", StringComparison.OrdinalIgnoreCase) ?? -1) > -1))
+            if (pos < snapshot.Length && _classifier.GetClassificationSpans(new SnapshotSpan(snapshot, new Span(pos, 1))).Any(x => (x.ClassificationType.Classification?.IndexOf("comment", StringComparison.OrdinalIgnoreCase) ?? -1) > -1))
             {
                 return;
             }
@@ -178,7 +141,7 @@ namespace ProjectFileTools.Completion
             if (_isSelfTrigger)
             {
                 _isSelfTrigger = false;
-                if(_currentCompletionSet != null)
+                if (_currentCompletionSet != null)
                 {
                     completionSets.Add(_currentCompletionSet);
                 }
@@ -234,7 +197,7 @@ namespace ProjectFileTools.Completion
                     break;
             }
 
-            _currentCompletionSet = _currentSession.CompletionSets.FirstOrDefault(x => x is PackageCompletionSet) as PackageCompletionSet;
+            _currentCompletionSet = _currentSession.IsDismissed ? null : _currentSession.CompletionSets.FirstOrDefault(x => x is PackageCompletionSet) as PackageCompletionSet;
 
             bool newCompletionSet = _currentCompletionSet == null;
             if (newCompletionSet)
@@ -254,7 +217,7 @@ namespace ProjectFileTools.Completion
             //If we're not part of an existing session & the results have already been
             //  finalized and those results assert that no packages match, show that
             //  there is no such package/version
-            if (!session.CompletionSets.Any(x => x is PackageCompletionSet))
+            if (!session.IsDismissed && !session.CompletionSets.Any(x => x is PackageCompletionSet))
             {
                 if (((_nameSearchJob != null && _nameSearchJob.RemainingFeeds.Count == 0)
                     || (_versionSearchJob != null && _versionSearchJob.RemainingFeeds.Count == 0))
@@ -272,9 +235,9 @@ namespace ProjectFileTools.Completion
             List<Microsoft.VisualStudio.Language.Intellisense.Completion> completions = new List<Microsoft.VisualStudio.Language.Intellisense.Completion>();
             Dictionary<string, FeedKind> packageLookup = new Dictionary<string, FeedKind>();
 
-            foreach(Tuple<string, FeedKind> info in _nameSearchJob.Results)
+            foreach (Tuple<string, FeedKind> info in _nameSearchJob.Results)
             {
-                if(!packageLookup.TryGetValue(info.Item1, out FeedKind existingInfo) || info.Item2 == FeedKind.Local)
+                if (!packageLookup.TryGetValue(info.Item1, out FeedKind existingInfo) || info.Item2 == FeedKind.Local)
                 {
                     packageLookup[info.Item1] = info.Item2;
                 }
@@ -331,60 +294,59 @@ namespace ProjectFileTools.Completion
             _currentCompletionSet.AccessibleCompletions.AddRange(completions);
         }
 
-        private void UpdateCompletions(object sender, EventArgs e)
+        private async void UpdateCompletions(object sender, EventArgs e)
         {
-            ThreadHelper.Generic.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            try
             {
-                try
+                if (_currentCompletionSet == null || _currentSession == null)
                 {
-                    if (_currentCompletionSet == null || _currentSession == null)
-                    {
-                        return;
-                    }
+                    return;
+                }
 
-                    string displayText = _currentCompletionSet?.SelectionStatus?.Completion?.DisplayText;
+                string displayText = _currentCompletionSet?.SelectionStatus?.Completion?.DisplayText;
 
-                    if (_nameSearchJob != null)
-                    {
-                        ProduceNameCompletionSet();
-                    }
-                    else if (_versionSearchJob != null)
-                    {
-                        ProduceVersionCompletionSet();
-                    }
+                if (_nameSearchJob != null)
+                {
+                    ProduceNameCompletionSet();
+                }
+                else if (_versionSearchJob != null)
+                {
+                    ProduceVersionCompletionSet();
+                }
 
-                    if (!_currentSession.IsStarted && _currentCompletionSet.Completions.Count > 0)
-                    {
-                        _isSelfTrigger = true;
-                        _currentSession = _completionBroker.CreateCompletionSession(_currentSession.TextView, _currentSession.GetTriggerPoint(_textBuffer), true);
-                        _currentSession.Start();
-                    }
+                if (!_currentSession.IsStarted && _currentCompletionSet.Completions.Count > 0)
+                {
+                    _isSelfTrigger = true;
+                    _currentSession = _completionBroker.CreateCompletionSession(_currentSession.TextView, _currentSession.GetTriggerPoint(_textBuffer), true);
+                    _currentSession.Start();
+                }
 
-                    if (!_currentSession.IsDismissed)
-                    {
-                        _currentSession.Filter();
+                if (!_currentSession.IsDismissed)
+                {
+                    _currentSession.Filter();
 
-                        if (displayText != null)
+                    if (displayText != null)
+                    {
+                        foreach (Microsoft.VisualStudio.Language.Intellisense.Completion completion in _currentSession.SelectedCompletionSet.Completions)
                         {
-                            foreach (Microsoft.VisualStudio.Language.Intellisense.Completion completion in _currentSession.SelectedCompletionSet.Completions)
+                            if (completion.DisplayText == displayText)
                             {
-                                if (completion.DisplayText == displayText)
-                                {
-                                    _currentCompletionSet.SelectionStatus = new CompletionSelectionStatus(completion, true, true);
-                                    break;
-                                }
+                                _currentCompletionSet.SelectionStatus = new CompletionSelectionStatus(completion, true, true);
+                                break;
                             }
                         }
-
-                        //_currentSession.Dismiss();
-                        //_currentSession = _completionBroker.TriggerCompletion(_currentSession.TextView);
                     }
+
+                    //_currentSession.Dismiss();
+                    //_currentSession = _completionBroker.TriggerCompletion(_currentSession.TextView);
                 }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine(ex.ToString());
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
         }
 
         public void Dispose()

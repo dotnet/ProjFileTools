@@ -11,7 +11,8 @@ namespace ProjectFileTools
     {
         public static BitmapSource MonikerToBitmap(ImageMoniker moniker, int size)
         {
-            var shell = (IVsUIShell5)ServiceProvider.GlobalProvider.GetService(typeof(SVsUIShell));
+            ThreadHelper.ThrowIfNotOnUIThread();
+            var shell = ServiceUtil.GetService<SVsUIShell, IVsUIShell5>();
             var backgroundColor = shell.GetThemedColorRgba(EnvironmentColors.MainWindowButtonActiveBorderBrushKey);
 
             var imageAttributes = new ImageAttributes
@@ -27,7 +28,7 @@ namespace ProjectFileTools
                 StructSize = Marshal.SizeOf(typeof(ImageAttributes))
             };
 
-            var service = (IVsImageService2)Package.GetGlobalService(typeof(SVsImageService));
+            var service = ServiceUtil.GetService<SVsImageService, IVsImageService2>();
             IVsUIObject result = service.GetImage(moniker, imageAttributes);
             result.get_Data(out object data);
 

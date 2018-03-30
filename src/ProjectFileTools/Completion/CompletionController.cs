@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.OLE.Interop;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 
@@ -35,6 +36,7 @@ namespace ProjectFileTools.Completion
 
         public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             bool handled = false;
             int hresult = VSConstants.S_OK;
 
@@ -112,6 +114,13 @@ namespace ProjectFileTools.Completion
                 {
                     return;
                 }
+
+                _currentSession.Dismissed += (sender, args) =>
+                {
+                    _currentSession.Committed -= HandleCompletionSessionCommit;
+                    _currentSession = null;
+                };
+                _currentSession.Committed += HandleCompletionSessionCommit;
             }
 
             if (_currentSession != null)
@@ -129,7 +138,7 @@ namespace ProjectFileTools.Completion
         {
             if (_currentSession == null)
             {
-                if(Broker.IsCompletionActive(TextView))
+                if (Broker.IsCompletionActive(TextView))
                 {
                     _currentSession = Broker.GetSessions(TextView).FirstOrDefault();
                 }
@@ -158,6 +167,13 @@ namespace ProjectFileTools.Completion
                 {
                     return false;
                 }
+
+                _currentSession.Dismissed += (sender, args) =>
+                {
+                    _currentSession.Committed -= HandleCompletionSessionCommit;
+                    _currentSession = null;
+                };
+                _currentSession.Committed += HandleCompletionSessionCommit;
             }
 
             if (_currentSession.SelectedCompletionSet != null && _currentSession.SelectedCompletionSet.SelectionStatus != null && !_currentSession.SelectedCompletionSet.SelectionStatus.IsSelected && !force)
@@ -202,7 +218,13 @@ namespace ProjectFileTools.Completion
             {
                 _currentSession = Broker.GetSessions(TextView)[0];
             }
-            _currentSession.Dismissed += (sender, args) => _currentSession = null;
+            _currentSession.Dismissed += (sender, args) =>
+            {
+                _currentSession.Committed -= HandleCompletionSessionCommit;
+                _currentSession = null;
+            };
+
+            _currentSession.Committed += HandleCompletionSessionCommit;
 
             if (!_currentSession.IsStarted)
             {
@@ -212,8 +234,32 @@ namespace ProjectFileTools.Completion
             return true;
         }
 
+        private void HandleCompletionSessionCommit(object sender, EventArgs e)
+        {
+            CompletionSet completionSet = ((ICompletionSession)sender).SelectedCompletionSet;
+            SnapshotSpan span = completionSet.ApplicableTo.GetSpan(completionSet.ApplicableTo.TextBuffer.CurrentSnapshot);
+            int caret = span.Span.Start;
+
+            if (PackageCompletionSource.TryHealOrAdvanceAttributeSelection(span.Snapshot, ref caret, out Span targetSpan, out string replacementText, out bool isHealingRequired))
+            {
+                if (isHealingRequired)
+                {
+                    ITextSnapshot newSnapshot = span.Snapshot.TextBuffer.Replace(targetSpan, replacementText);
+                    TextView.Caret.MoveTo(new SnapshotPoint(newSnapshot, caret));
+                }
+                else
+                {
+                    TextView.Caret.MoveTo(new SnapshotPoint(span.Snapshot, caret));
+                }
+
+                Broker.TriggerCompletion(TextView);
+            }
+        }
+
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             if (pguidCmdGroup == VSConstants.VSStd2K)
             {
                 switch ((VSConstants.VSStd2KCmdID)prgCmds[0].cmdID)

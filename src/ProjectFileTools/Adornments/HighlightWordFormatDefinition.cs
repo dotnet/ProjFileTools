@@ -28,13 +28,14 @@ namespace ProjectFileTools.Adornments
 
         public HighlightWordFormatDefinition()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             // Default the BackgroundColor to a transparent grey
             BackgroundColor = Color.FromArgb(127, 170, 170, 170);
             DisplayName = "Highlight Word";
             ZOrder = 5;
 
             // If possible, set the Background color to match the Highlighted Reference color
-            IVsFontAndColorStorage colorStorage = ServiceProvider.GlobalProvider.GetService(typeof(IVsFontAndColorStorage)) as IVsFontAndColorStorage;
+            IVsFontAndColorStorage colorStorage = ServiceUtil.GetService<IVsFontAndColorStorage>();
             ColorableItemInfo[] itemInfoOut = new ColorableItemInfo[1];
             if(colorStorage.OpenCategory(ref _textEditorCategory, (uint)(__FCSTORAGEFLAGS.FCSF_READONLY | __FCSTORAGEFLAGS.FCSF_LOADDEFAULTS) ) == VSConstants.S_OK)
             {

@@ -7,6 +7,7 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.FindAllReferences;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell.TableManager;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
@@ -35,6 +36,8 @@ namespace ProjectFileTools
 
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             if (pguidCmdGroup == _vSStd97CmdIDGuid && cCmds == (uint)VSConstants.VSStd97CmdID.GotoDefn)
             {
                 prgCmds[0].cmdf = (uint)OLECMDF.OLECMDF_SUPPORTED;
@@ -53,7 +56,9 @@ namespace ProjectFileTools
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    HttpResponseMessage response = client.GetAsync(packageAndVersionUrl).Result;
+                    HttpResponseMessage response = null;
+
+                    ThreadHelper.JoinableTaskFactory.Run(async () => response = await client.GetAsync(packageAndVersionUrl));
 
                     if (response.StatusCode == System.Net.HttpStatusCode.OK)
                     {
@@ -62,7 +67,7 @@ namespace ProjectFileTools
                     }
                     else
                     {
-                        response = client.GetAsync(packageAndVersionUrl).Result;
+                        ThreadHelper.JoinableTaskFactory.Run(async () => response = await client.GetAsync(packageAndVersionUrl));
 
                         if (response.StatusCode == System.Net.HttpStatusCode.OK)
                         {
@@ -80,6 +85,7 @@ namespace ProjectFileTools
 
         public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (pguidCmdGroup == _vSStd97CmdIDGuid && nCmdID == (uint)VSConstants.VSStd97CmdID.GotoDefn)
             {
                 TextView.TextBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out ITextDocument textDoc);
@@ -98,16 +104,16 @@ namespace ProjectFileTools
 
                 if (definitions.Count == 1)
                 {
-                    DTE dte = ServiceProvider.GlobalProvider.GetService(typeof(DTE)) as DTE;
+                    DTE dte = ServiceUtil.DTE;
                     dte.MainWindow.Activate();
 
-                    using (var state = new NewDocumentStateScope(Microsoft.VisualStudio.Shell.Interop.__VSNEWDOCUMENTSTATE.NDS_Provisional, Guid.Parse(ProjectFileToolsPackage.PackageGuidString)))
+                    using (var state = new NewDocumentStateScope(__VSNEWDOCUMENTSTATE.NDS_Provisional, Guid.Parse(ProjectFileToolsPackage.PackageGuidString)))
                     {
-                        EnvDTE.Window w = dte.ItemOperations.OpenFile(definitions[0].File, EnvDTE.Constants.vsViewKindTextView);
+                        Window w = dte.ItemOperations.OpenFile(definitions[0].File, EnvDTE.Constants.vsViewKindTextView);
 
                         if (definitions[0].Line.HasValue)
                         {
-                            ((EnvDTE.TextSelection)dte.ActiveDocument.Selection).GotoLine(definitions[0].Line.Value, true);
+                            ((TextSelection)dte.ActiveDocument.Selection).GotoLine(definitions[0].Line.Value, true);
                         }
                     }
 
@@ -116,7 +122,7 @@ namespace ProjectFileTools
 
                 else if (definitions.Count > 1)
                 {
-                    IFindAllReferencesService farService = (IFindAllReferencesService)Package.GetGlobalService(typeof(SVsFindAllReferences));
+                    IFindAllReferencesService farService = ServiceUtil.GetService<SVsFindAllReferences, IFindAllReferencesService>();
                     FarDataSource dataSource = new FarDataSource(1);
                     dataSource.Snapshots[0] = new FarDataSnapshot(definitions);
 
