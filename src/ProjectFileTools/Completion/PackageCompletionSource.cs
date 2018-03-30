@@ -19,21 +19,22 @@ namespace ProjectFileTools.Completion
 
     internal class PackageCompletionSource : ICompletionSource
     {
-        private readonly ICompletionBroker _completionBroker;
-        private IPackageFeedSearchJob<Tuple<string, FeedKind>> _nameSearchJob;
-        private readonly IPackageSearchManager _searchManager;
-        private readonly ITextBuffer _textBuffer;
-        private IPackageFeedSearchJob<Tuple<string, FeedKind>> _versionSearchJob;
-        private ICompletionSession _currentSession;
-        private PackageCompletionSet _currentCompletionSet;
-        private int _pos;
-        private readonly IClassifier _classifier;
-        private bool _isSelfTrigger;
         private static readonly IReadOnlyDictionary<string, string> AttributeToCompletionTypeMap = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             {"Include", "Name" },
             {"Version", "Version" }
         };
+
+        private readonly IClassifier _classifier;
+        private readonly ICompletionBroker _completionBroker;
+        private readonly IPackageSearchManager _searchManager;
+        private readonly ITextBuffer _textBuffer;
+        private PackageCompletionSet _currentCompletionSet;
+        private ICompletionSession _currentSession;
+        private bool _isSelfTrigger;
+        private IPackageFeedSearchJob<Tuple<string, FeedKind>> _nameSearchJob;
+        private int _pos;
+        private IPackageFeedSearchJob<Tuple<string, FeedKind>> _versionSearchJob;
 
         public PackageCompletionSource(ITextBuffer textBuffer, ICompletionBroker completionBroker, IClassifierAggregatorService classifier, IPackageSearchManager searchManager)
         {
@@ -42,6 +43,42 @@ namespace ProjectFileTools.Completion
             _textBuffer = textBuffer;
             _completionBroker = completionBroker;
             textBuffer.Properties.AddProperty(typeof(PackageCompletionSource), this);
+        }
+
+        public static bool IsInRangeForPackageCompletion(ITextSnapshot snapshot, int pos, out Span span, out string packageName, out string packageVersion, out string completionType)
+        {
+            XmlInfo info = XmlTools.GetXmlInfo(snapshot, pos);
+
+            if (TryGetPackageInfoFromXml(info, out packageName, out packageVersion) && AttributeToCompletionTypeMap.TryGetValue(info.AttributeName, out completionType))
+            {
+                span = new Span(info.AttributeValueStart, info.AttributeValueLength);
+                return true;
+            }
+
+            completionType = null;
+            packageName = null;
+            packageVersion = null;
+            span = default(Span);
+            return false;
+        }
+
+        public static bool TryGetPackageInfoFromXml(XmlInfo info, out string packageName, out string packageVersion)
+        {
+            if (info != null
+                && (info.TagName == "PackageReference" || info.TagName == "DotNetCliToolReference")
+                && info.AttributeName != null && AttributeToCompletionTypeMap.ContainsKey(info.AttributeName)
+                && info.TryGetElement(out XElement element))
+            {
+                XAttribute name = element.Attribute(XName.Get("Include"));
+                XAttribute version = element.Attribute(XName.Get("Version"));
+                packageName = name?.Value;
+                packageVersion = version?.Value;
+                return true;
+            }
+
+            packageName = null;
+            packageVersion = null;
+            return false;
         }
 
         public static bool TryHealOrAdvanceAttributeSelection(ITextSnapshot snapshot, ref int pos, out Span targetSpan, out string newText, out bool isHealingRequired)
@@ -78,42 +115,6 @@ namespace ProjectFileTools.Completion
             pos = proposedPos;
             targetSpan = new Span(info.TagStart, info.RealDocumentLength);
             return move;
-        }
-
-        public static bool TryGetPackageInfoFromXml(XmlInfo info, out string packageName, out string packageVersion)
-        {
-            if (info != null
-                && (info.TagName == "PackageReference" || info.TagName == "DotNetCliToolReference")
-                && info.AttributeName != null && AttributeToCompletionTypeMap.ContainsKey(info.AttributeName)
-                && info.TryGetElement(out XElement element))
-            {
-                XAttribute name = element.Attribute(XName.Get("Include"));
-                XAttribute version = element.Attribute(XName.Get("Version"));
-                packageName = name?.Value;
-                packageVersion = version?.Value;
-                return true;
-            }
-
-            packageName = null;
-            packageVersion = null;
-            return false;
-        }
-
-        public static bool IsInRangeForPackageCompletion(ITextSnapshot snapshot, int pos, out Span span, out string packageName, out string packageVersion, out string completionType)
-        {
-            XmlInfo info = XmlTools.GetXmlInfo(snapshot, pos);
-
-            if (TryGetPackageInfoFromXml(info, out packageName, out packageVersion) && AttributeToCompletionTypeMap.TryGetValue(info.AttributeName, out completionType))
-            {
-                span = new Span(info.AttributeValueStart, info.AttributeValueLength);
-                return true;
-            }
-
-            completionType = null;
-            packageName = null;
-            packageVersion = null;
-            span = default(Span);
-            return false;
         }
 
         public void AugmentCompletionSession(ICompletionSession session, IList<CompletionSet> completionSets)
@@ -228,6 +229,10 @@ namespace ProjectFileTools.Completion
 
                 completionSets.Add(_currentCompletionSet);
             }
+        }
+
+        public void Dispose()
+        {
         }
 
         private void ProduceNameCompletionSet()
@@ -347,10 +352,6 @@ namespace ProjectFileTools.Completion
             {
                 Debug.WriteLine(ex.ToString());
             }
-        }
-
-        public void Dispose()
-        {
         }
     }
 }

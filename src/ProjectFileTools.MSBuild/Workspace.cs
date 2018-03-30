@@ -18,13 +18,11 @@ namespace ProjectFileTools.MSBuild
     public class Workspace : IWorkspace, IDisposableObservable
     {
         private ProjectCollection _collection;
-        private Project _project;
         private HashSet<string> _containedFiles;
-        private List<FileSystemWatcher> _watchers;
         private bool _needsReload;
+        private Project _project;
+        private List<FileSystemWatcher> _watchers;
         private PropertyInfo ProjectItemElementXmlElementProperty = typeof(ProjectElement).GetProperty("XmlElement", BindingFlags.NonPublic | BindingFlags.Instance);
-
-        public bool IsDisposed { get; private set; }
 
         internal Workspace(string filePath)
         {
@@ -45,34 +43,32 @@ namespace ProjectFileTools.MSBuild
             }
         }
 
-        private List<string> GetPathsFromFileSpec(string fileSpec)
+        public bool IsDisposed { get; private set; }
+
+        public void Dispose()
         {
-            IList<ProjectItem> items = _project.AddItem("___TEMPORARY___", fileSpec);
-            _project.RemoveItems(items);
-            List<string> files = new List<string>();
-
-            foreach (ProjectItem item in items)
+            IsDisposed = true;
+            List<FileSystemWatcher> watchers = Interlocked.Exchange(ref _watchers, null);
+            if (watchers != null)
             {
-                files.Add(item.EvaluatedInclude);
+                foreach (FileSystemWatcher watcher in watchers)
+                {
+                    watcher.Changed -= MarkReload;
+                    watcher.Deleted -= MarkReload;
+                    watcher.Renamed -= MarkReload;
+                    watcher.Dispose();
+                }
             }
-
-            return files;
         }
 
-        public List<Definition> GetItems(string fileSpec)
+        public bool EvaluateCondition(string text)
         {
-            List<string> items = GetPathsFromFileSpec(fileSpec);
-            List<Definition> results = new List<Definition>();
-            string projectName = Path.GetFileNameWithoutExtension(_project.FullPath);
+            return _project.CreateProjectInstance().EvaluateCondition(text);
+        }
 
-            foreach (string item in items)
-            {
-                bool isIncluded = _project.GetItemsByEvaluatedInclude(item).Any();
-                string message = isIncluded ? "Included" : "Not Included";
-                results.Add(new Definition(item, projectName, message, "(Glob Match)"));
-            }
-
-            return results;
+        public string GetEvaluatedPropertyValue(string text)
+        {
+            return _project.ExpandString(text);
         }
 
         public List<Definition> GetItemProvenance(string fileSpec)
@@ -94,11 +90,27 @@ namespace ProjectFileTools.MSBuild
                         {
                             clone.SetAttribute(node.LocalName, node.Value);
                         }
-                        
+
                         string lineText = clone.OuterXml;
                         results.Add(new Definition(record.ItemElement.ContainingProject.FullPath, include.EvaluatedInclude, record.Operation.ToString(), lineText, record.ItemElement.Location.Line, record.ItemElement.Location.Column));
                     }
                 }
+            }
+
+            return results;
+        }
+
+        public List<Definition> GetItems(string fileSpec)
+        {
+            List<string> items = GetPathsFromFileSpec(fileSpec);
+            List<Definition> results = new List<Definition>();
+            string projectName = Path.GetFileNameWithoutExtension(_project.FullPath);
+
+            foreach (string item in items)
+            {
+                bool isIncluded = _project.GetItemsByEvaluatedInclude(item).Any();
+                string message = isIncluded ? "Included" : "Not Included";
+                results.Add(new Definition(item, projectName, message, "(Glob Match)"));
             }
 
             return results;
@@ -216,6 +228,25 @@ namespace ProjectFileTools.MSBuild
             return _containedFiles.Contains(filePath);
         }
 
+        private List<string> GetPathsFromFileSpec(string fileSpec)
+        {
+            IList<ProjectItem> items = _project.AddItem("___TEMPORARY___", fileSpec);
+            _project.RemoveItems(items);
+            List<string> files = new List<string>();
+
+            foreach (ProjectItem item in items)
+            {
+                files.Add(item.EvaluatedInclude);
+            }
+
+            return files;
+        }
+
+        private void MarkReload(object sender, FileSystemEventArgs e)
+        {
+            _needsReload = true;
+        }
+
         private void ReloadIfNecessary()
         {
             if (_needsReload)
@@ -273,37 +304,6 @@ namespace ProjectFileTools.MSBuild
                 watcher.Renamed += MarkReload;
                 _watchers.Add(watcher);
             }
-        }
-
-        private void MarkReload(object sender, FileSystemEventArgs e)
-        {
-            _needsReload = true;
-        }
-
-        public void Dispose()
-        {
-            IsDisposed = true;
-            List<FileSystemWatcher> watchers = Interlocked.Exchange(ref _watchers, null);
-            if (watchers != null)
-            {
-                foreach (FileSystemWatcher watcher in watchers)
-                {
-                    watcher.Changed -= MarkReload;
-                    watcher.Deleted -= MarkReload;
-                    watcher.Renamed -= MarkReload;
-                    watcher.Dispose();
-                }
-            }
-        }
-
-        public string GetEvaluatedPropertyValue(string text)
-        {
-            return _project.ExpandString(text);
-        }
-
-        public bool EvaluateCondition(string text)
-        {
-            return _project.CreateProjectInstance().EvaluateCondition(text);
         }
     }
 }
