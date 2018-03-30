@@ -27,15 +27,7 @@ namespace ProjectFileTools.QuickInfo
 
         public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
         {
-            string text = textBuffer.CurrentSnapshot.GetText();
-            bool isCore = text.IndexOf("Microsoft.Net.Sdk", StringComparison.OrdinalIgnoreCase) > -1;
-
-            if (isCore)
-            {
-                return new PackageQuickInfoSource(_searchManager);
-            }
-
-            return null;
+            return new PackageQuickInfoSource(_searchManager);
         }
     }
 
