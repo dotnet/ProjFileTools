@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="e22f3d7e-6b01-4ef8-b3cb-ea293a87b00e" Version="1.1.0" Language="en-US" Publisher="Microsoft" />
+        <Identity Id="e22f3d7e-6b01-4ef8-b3cb-ea293a87b00e" Version="1.2.0" Language="en-US" Publisher="Microsoft" />
         <DisplayName>Project File Tools</DisplayName>
         <Description xml:space="preserve">Provides Intellisense and other tooling for XML based project files such as .csproj and .vbproj files.</Description>
         <MoreInfo>https://marketplace.visualstudio.com/items?itemName=ms-madsk.ProjectFileTools</MoreInfo>
@@ -10,7 +10,7 @@
         <Tags>project, csproj, vbproj</Tags>
     </Metadata>
     <Installation>
-        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0.26724.0,16.0)" />
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0.27428.0,16.0)" />
     </Installation>
     <Dependencies>
         <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
