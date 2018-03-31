@@ -57,6 +57,8 @@ namespace ProjectFileTools.Helpers
 
         public int AttributeValueLength => AttributeQuoteEnd - AttributeQuoteStart - 1;
 
+        public string AttributeValue => ElementText.Substring(AttributeValueStart - TagStart, AttributeValueLength);
+
         public int RealDocumentLength => EndInActualDocument - TagStart + 1;
 
         public void Flatten(out string documentText, out int start, out int end, out int startQuote, out int endQuote, out int realEnd, out bool isHealingRequired, out string healedXml)
