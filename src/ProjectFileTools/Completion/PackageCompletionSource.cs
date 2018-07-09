@@ -36,7 +36,17 @@ namespace ProjectFileTools.Completion
         private int _pos;
         private IPackageFeedSearchJob<Tuple<string, FeedKind>> _versionSearchJob;
 
-        public PackageCompletionSource(ITextBuffer textBuffer, ICompletionBroker completionBroker, IClassifierAggregatorService classifier, IPackageSearchManager searchManager)
+        public static PackageCompletionSource GetOrAddCompletionSource(ITextBuffer textBuffer, ICompletionBroker completionBroker, IClassifierAggregatorService classifier, IPackageSearchManager searchManager)
+        {
+            if (textBuffer.Properties.TryGetProperty(typeof(PackageCompletionSource), out PackageCompletionSource source))
+            {
+                return source;
+            }
+
+            return new PackageCompletionSource(textBuffer, completionBroker, classifier, searchManager);
+        }
+
+        private PackageCompletionSource(ITextBuffer textBuffer, ICompletionBroker completionBroker, IClassifierAggregatorService classifier, IPackageSearchManager searchManager)
         {
             _classifier = classifier.GetClassifier(textBuffer);
             _searchManager = searchManager;
