@@ -32,7 +32,7 @@ namespace ProjectFileTools.Completion
 
             if (isCore)
             {
-                return new PackageCompletionSource(textBuffer, _completionBroker, _classifier, _searchManager);
+                return PackageCompletionSource.GetOrAddCompletionSource(textBuffer, _completionBroker, _classifier, _searchManager);
             }
 
             return null;
