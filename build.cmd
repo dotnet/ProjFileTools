@@ -111,7 +111,7 @@ if "%NuGetHome%" == "" (
     REM If it's not set, the nuget cache is in the user's home dir
     set NuGetHome=%UserProfile%\.nuget\packages
 )
-set SignTool="%NuGetHome%\roslyntools.microsoft.signtool\0.3.1-beta\tools\SignTool.exe"
+set SignTool="%NuGetHome%\roslyntools.microsoft.signtool\0.3.3-beta\tools\SignTool.exe"
 
 %SignTool% -config "%Root%build\Signing\SignToolConfig.json" -msbuildPath "%VS150COMNTOOLS%..\..\MSBuild\15.0\Bin\msbuild.exe" "%Root%bin\%BuildConfiguration%"
 if ERRORLEVEL 1 (
