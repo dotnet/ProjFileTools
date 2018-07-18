@@ -1,7 +1,7 @@
 {
     "sign": [
         {
-            "certificate": "Microsoft400",
+            "certificate": "MicrosoftSHA2",
             "strongName": "MsSharedLib72",
             "values": [
                 "ProjectFileTools.dll",
