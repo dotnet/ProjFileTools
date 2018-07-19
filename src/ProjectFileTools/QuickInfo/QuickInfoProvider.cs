@@ -4,39 +4,45 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Language.Intellisense;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
 using ProjectFileTools.Completion;
 using ProjectFileTools.Helpers;
 using ProjectFileTools.MSBuild;
+using ProjectFileTools.NuGetSearch.Contracts;
 
 namespace ProjectFileTools.QuickInfo
 {
     [Export(typeof(IAsyncQuickInfoSourceProvider))]
-    [Name("Project file MSBuild Quick Info Controller")]
+    [Name("Project file tools Quick Info Controller")]
     [ContentType("XML")]
-    internal class MsBuildPropertyQuickInfoProvider : IAsyncQuickInfoSourceProvider
+    internal class QuickInfoProvider : IAsyncQuickInfoSourceProvider
     {
+        private readonly IPackageSearchManager _searchManager;
         private readonly IWorkspaceManager _workspaceManager;
 
         [ImportingConstructor]
-        public MsBuildPropertyQuickInfoProvider(IWorkspaceManager workspaceManager)
+        public QuickInfoProvider(IWorkspaceManager workspaceManager, IPackageSearchManager searchManager)
         {
+            _searchManager = searchManager;
             _workspaceManager = workspaceManager;
         }
 
         public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
         {
-            return new MsBuildPropertyQuickInfoSource(_workspaceManager);
+            return new MsBuildPropertyQuickInfoSource(_workspaceManager, _searchManager);
         }
     }
 
     internal class MsBuildPropertyQuickInfoSource : IAsyncQuickInfoSource
     {
+        private readonly IPackageSearchManager _searchManager;
         private readonly IWorkspaceManager _workspaceManager;
 
-        public MsBuildPropertyQuickInfoSource(IWorkspaceManager workspaceManager)
+        public MsBuildPropertyQuickInfoSource(IWorkspaceManager workspaceManager, IPackageSearchManager searchManager)
         {
+            _searchManager = searchManager;
             _workspaceManager = workspaceManager;
         }
 
@@ -44,18 +50,18 @@ namespace ProjectFileTools.QuickInfo
         {            
         }
 
-        public Task<QuickInfoItem> GetQuickInfoItemAsync(IAsyncQuickInfoSession session, CancellationToken cancellationToken)
+        public async Task<QuickInfoItem> GetQuickInfoItemAsync(IAsyncQuickInfoSession session, CancellationToken cancellationToken)
         {
             if (!session.TextView.TextBuffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDoc))
             {
-                return Task.FromResult<QuickInfoItem>(null);
+                return null;
             }
 
             SnapshotPoint? triggerPoint = session.GetTriggerPoint(session.TextView.TextSnapshot);
 
             if (triggerPoint == null)
             {
-                return Task.FromResult<QuickInfoItem>(null);
+                return null;
             }
 
             int pos = triggerPoint.Value.Position;
@@ -76,7 +82,8 @@ namespace ProjectFileTools.QuickInfo
                         {
                             bool isTrue = workspace.EvaluateCondition(info.AttributeValue);
                             evaluatedValue = $"Expanded value: {evaluatedValue}\nEvaluation result: {isTrue}";
-                            return Task.FromResult(new QuickInfoItem(target, evaluatedValue));
+                            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                            return new QuickInfoItem(target, evaluatedValue);
                         }
                         catch (Exception ex)
                         {
@@ -86,12 +93,38 @@ namespace ProjectFileTools.QuickInfo
                     else
                     {
                         evaluatedValue = $"Value(s):\n    {string.Join("\n    ", evaluatedValue.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))}";
-                        return Task.FromResult(new QuickInfoItem(target, evaluatedValue));
+                        await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                        return new QuickInfoItem(target, evaluatedValue);
                     }
                 }
             }
+            else
+            {
+                string text = session.TextView.TextBuffer.CurrentSnapshot.GetText();
+                int targetFrameworkElementStartIndex = text.IndexOf("<TargetFramework>", StringComparison.OrdinalIgnoreCase);
+                int targetFrameworksElementStartIndex = text.IndexOf("<TargetFrameworks>", StringComparison.OrdinalIgnoreCase);
+                string tfm = "netcoreapp1.0";
 
-            return Task.FromResult<QuickInfoItem>(null);
+                if (targetFrameworksElementStartIndex > -1)
+                {
+                    int closeTfms = text.IndexOf("</TargetFrameworks>", targetFrameworksElementStartIndex);
+                    int realStart = targetFrameworksElementStartIndex + "<TargetFrameworks>".Length;
+                    string allTfms = text.Substring(realStart, closeTfms - realStart);
+                    tfm = allTfms.Split(';')[0];
+                }
+                else if (targetFrameworkElementStartIndex > -1)
+                {
+                    int closeTfm = text.IndexOf("</TargetFramework>", targetFrameworkElementStartIndex);
+                    int realStart = targetFrameworkElementStartIndex + "<TargetFramework>".Length;
+                    tfm = text.Substring(realStart, closeTfm - realStart);
+                }
+
+                ITrackingSpan applicableToSpan = session.TextView.TextBuffer.CurrentSnapshot.CreateTrackingSpan(s, SpanTrackingMode.EdgeInclusive);
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                return new QuickInfoItem(applicableToSpan, new PackageInfoControl(packageId, packageVersion, tfm, _searchManager));
+            }
+
+            return null;
         }
     }
 }

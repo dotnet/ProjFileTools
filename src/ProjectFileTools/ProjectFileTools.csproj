@@ -92,8 +92,7 @@
       <DependentUpon>PackageInfoControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="ProjectFileToolsPackage.cs" />
-    <Compile Include="QuickInfo\MsBuildPropertyQuickInfoProvider.cs" />
-    <Compile Include="QuickInfo\PackageQuickInfoProvider.cs" />
+    <Compile Include="QuickInfo\QuickInfoProvider.cs" />
     <Compile Include="ServiceUtil.cs" />
     <Compile Include="source.extension.cs">
       <DependentUpon>source.extension.vsixmanifest</DependentUpon>
