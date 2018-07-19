@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace ProjectFileTools
 {
-    [PackageRegistration(UseManagedResourcesOnly = true)]
+    [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", Vsix.Version, IconResourceID = 400)]
     [Guid(PackageGuidString)]
     public sealed class ProjectFileToolsPackage : AsyncPackage

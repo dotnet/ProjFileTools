@@ -64,8 +64,11 @@ namespace FarTestProvider
                 case StandardTableKeyNames.FullText:
                 case StandardTableKeyNames2.TextInlines:
                     {
-                        List<Inline> inlines = new List<Inline>();
-                        inlines.Add(new Run(bucket.Location.Text) { FontWeight = FontWeights.Bold });
+                        List<Inline> inlines = new List<Inline>
+                        {
+                            new Run(bucket.Location.Text) { FontWeight = FontWeights.Bold }
+                        };
+
                         content = inlines;
                         return true;
                     }

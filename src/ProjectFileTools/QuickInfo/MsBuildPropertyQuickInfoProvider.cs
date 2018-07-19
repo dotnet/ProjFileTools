@@ -13,7 +13,7 @@ using ProjectFileTools.MSBuild;
 namespace ProjectFileTools.QuickInfo
 {
     [Export(typeof(IAsyncQuickInfoSourceProvider))]
-    [Name("Xml Package Quick Info Controller")]
+    [Name("Project file MSBuild Quick Info Controller")]
     [ContentType("XML")]
     internal class MsBuildPropertyQuickInfoProvider : IAsyncQuickInfoSourceProvider
     {

@@ -8,23 +8,23 @@ using ProjectFileTools.NuGetSearch.Contracts;
 namespace ProjectFileTools.Adornments
 {
     //[Export(typeof(IViewTaggerProvider))]
-    [ContentType("XML")]
-    [TagType(typeof(IntraTextAdornmentTag))]
-    internal class DotnetCliToolReferenceGlyphTaggerProvider : IViewTaggerProvider
-    {
-        private readonly IPackageSearchManager _searchManager;
+    //[ContentType("XML")]
+    //[TagType(typeof(IntraTextAdornmentTag))]
+    //internal class DotnetCliToolReferenceGlyphTaggerProvider : IViewTaggerProvider
+    //{
+    //    private readonly IPackageSearchManager _searchManager;
 
-        [ImportingConstructor]
-        public DotnetCliToolReferenceGlyphTaggerProvider(IPackageSearchManager searchManager)
-        {
-            _searchManager = searchManager;
-        }
+    //    [ImportingConstructor]
+    //    public DotnetCliToolReferenceGlyphTaggerProvider(IPackageSearchManager searchManager)
+    //    {
+    //        _searchManager = searchManager;
+    //    }
 
-        public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer textBuffer)
-            where T : ITag
-        {
-            IIntraTextAdornmentFactory<PackageGlyphTag> factory = new PackageGlyphTagFactory(_searchManager);
-            return IntraTextAdornmentTagger<PackageGlyphTag>.GetOrCreate(textView, textBuffer, factory, "DotNetCliToolReference") as ITagger<T>;
-        }
-    }
+    //    public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer textBuffer)
+    //        where T : ITag
+    //    {
+    //        IIntraTextAdornmentFactory<PackageGlyphTag> factory = new PackageGlyphTagFactory(_searchManager);
+    //        return IntraTextAdornmentTagger<PackageGlyphTag>.GetOrCreate(textView, textBuffer, factory, "DotNetCliToolReference") as ITagger<T>;
+    //    }
+    //}
 }

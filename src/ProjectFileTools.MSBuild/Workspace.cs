@@ -312,11 +312,14 @@ namespace ProjectFileTools.MSBuild
 
                 foreach (string path in _containedFiles)
                 {
-                    FileSystemWatcher watcher = new FileSystemWatcher();
-                    watcher.Path = Path.GetDirectoryName(path);
-                    watcher.Filter = Path.GetFileName(path);
-                    watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-                    watcher.EnableRaisingEvents = true;
+                    FileSystemWatcher watcher = new FileSystemWatcher
+                    {
+                        Path = Path.GetDirectoryName(path),
+                        Filter = Path.GetFileName(path),
+                        NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName,
+                        EnableRaisingEvents = true
+                    };
+
                     watcher.Changed += MarkReload;
                     watcher.Deleted += MarkReload;
                     watcher.Renamed += MarkReload;

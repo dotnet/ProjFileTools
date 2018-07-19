@@ -20,10 +20,10 @@ namespace ProjectFileTools
         private readonly ICompletionBroker _completionBroker;
         private readonly IWorkspaceManager _workspaceManager;
 
-        [Export(typeof(AdornmentLayerDefinition))]
-        [Name("TextAdornment")]
-        [Order(After = PredefinedAdornmentLayers.Selection, Before = PredefinedAdornmentLayers.Text)]
-        private AdornmentLayerDefinition editorAdornmentLayer;
+        //[Export(typeof(AdornmentLayerDefinition))]
+        //[Name("TextAdornment")]
+        //[Order(After = PredefinedAdornmentLayers.Selection, Before = PredefinedAdornmentLayers.Text)]
+        //private AdornmentLayerDefinition editorAdornmentLayer;
 
         [ImportingConstructor]
         public TextViewCreationListener(ICompletionBroker completionBroker, IVsEditorAdaptersFactoryService adaptersFactory, IWorkspaceManager workspaceManager)
