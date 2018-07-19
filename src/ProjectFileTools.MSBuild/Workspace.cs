@@ -18,11 +18,11 @@ namespace ProjectFileTools.MSBuild
     public class Workspace : IWorkspace, IDisposableObservable
     {
         private ProjectCollection _collection;
-        private HashSet<string> _containedFiles;
+        private readonly HashSet<string> _containedFiles;
         private bool _needsReload;
         private Project _project;
         private List<FileSystemWatcher> _watchers;
-        private PropertyInfo ProjectItemElementXmlElementProperty = typeof(ProjectElement).GetProperty("XmlElement", BindingFlags.NonPublic | BindingFlags.Instance);
+        private readonly PropertyInfo _projectItemElementXmlElementProperty = typeof(ProjectElement).GetProperty("XmlElement", BindingFlags.NonPublic | BindingFlags.Instance);
 
         internal Workspace(string filePath)
         {
@@ -63,18 +63,24 @@ namespace ProjectFileTools.MSBuild
 
         public bool EvaluateCondition(string text)
         {
-            return _project.CreateProjectInstance().EvaluateCondition(text);
+            return _project?.CreateProjectInstance().EvaluateCondition(text) ?? false;
         }
 
         public string GetEvaluatedPropertyValue(string text)
         {
-            return _project.ExpandString(text);
+            return _project?.ExpandString(text) ?? string.Empty;
         }
 
         public List<Definition> GetItemProvenance(string fileSpec)
         {
-            List<string> items = GetPathsFromFileSpec(fileSpec);
             List<Definition> results = new List<Definition>();
+
+            if (_project == null)
+            {
+                return results;
+            }
+
+            List<string> items = GetPathsFromFileSpec(fileSpec);
             XmlDocument doc = new XmlDocument();
 
             foreach (string item in items)
@@ -83,7 +89,7 @@ namespace ProjectFileTools.MSBuild
                 {
                     foreach (ProvenanceResult record in _project.GetItemProvenance(include))
                     {
-                        XmlElement element = (XmlElement)ProjectItemElementXmlElementProperty.GetValue(record.ItemElement);
+                        XmlElement element = (XmlElement)_projectItemElementXmlElementProperty.GetValue(record.ItemElement);
                         XmlElement clone = doc.CreateElement(element.LocalName);
 
                         foreach (XmlAttribute node in element.Attributes.OfType<XmlAttribute>().ToList())
@@ -102,6 +108,11 @@ namespace ProjectFileTools.MSBuild
 
         public List<Definition> GetItems(string fileSpec)
         {
+            if (_project == null)
+            {
+                return new List<Definition>();
+            }
+
             List<string> items = GetPathsFromFileSpec(fileSpec);
             List<Definition> results = new List<Definition>();
             string projectName = Path.GetFileNameWithoutExtension(_project.FullPath);
@@ -131,7 +142,7 @@ namespace ProjectFileTools.MSBuild
             if (_project != null)
             {
                 XmlDocumentSyntax root = Parser.ParseText(sourceText);
-                SyntaxNode syntaxNode = SyntaxLocator.FindNode(root, position);
+                SyntaxNode syntaxNode = root.FindNode(position);
 
                 // Resolves Definition for properties e.g. $(foo)
                 if (syntaxNode.Kind == SyntaxKind.XmlTextLiteralToken && Utilities.IsProperty(sourceText.Substring(syntaxNode.Span.Start, syntaxNode.FullWidth), position - syntaxNode.Span.Start, out string propertyName))
@@ -230,6 +241,11 @@ namespace ProjectFileTools.MSBuild
 
         private List<string> GetPathsFromFileSpec(string fileSpec)
         {
+            if (_project == null)
+            {
+                return new List<string>();
+            }
+
             IList<ProjectItem> items = _project.AddItem("___TEMPORARY___", fileSpec);
             _project.RemoveItems(items);
             List<string> files = new List<string>();
@@ -249,7 +265,7 @@ namespace ProjectFileTools.MSBuild
 
         private void ReloadIfNecessary()
         {
-            if (_needsReload)
+            if (_needsReload && _project != null)
             {
                 string tempPath = _project.FullPath;
                 try
@@ -285,24 +301,27 @@ namespace ProjectFileTools.MSBuild
 
             _watchers.Clear();
 
-            foreach (ResolvedImport import in _project.Imports)
+            if (_project != null)
             {
-                _containedFiles.Add(import.ImportedProject.FullPath);
-            }
+                foreach (ResolvedImport import in _project.Imports)
+                {
+                    _containedFiles.Add(import.ImportedProject.FullPath);
+                }
 
-            _containedFiles.Add(_project.FullPath);
+                _containedFiles.Add(_project.FullPath);
 
-            foreach (string path in _containedFiles)
-            {
-                FileSystemWatcher watcher = new FileSystemWatcher();
-                watcher.Path = Path.GetDirectoryName(path);
-                watcher.Filter = Path.GetFileName(path);
-                watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-                watcher.EnableRaisingEvents = true;
-                watcher.Changed += MarkReload;
-                watcher.Deleted += MarkReload;
-                watcher.Renamed += MarkReload;
-                _watchers.Add(watcher);
+                foreach (string path in _containedFiles)
+                {
+                    FileSystemWatcher watcher = new FileSystemWatcher();
+                    watcher.Path = Path.GetDirectoryName(path);
+                    watcher.Filter = Path.GetFileName(path);
+                    watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
+                    watcher.EnableRaisingEvents = true;
+                    watcher.Changed += MarkReload;
+                    watcher.Deleted += MarkReload;
+                    watcher.Renamed += MarkReload;
+                    _watchers.Add(watcher);
+                }
             }
         }
     }
