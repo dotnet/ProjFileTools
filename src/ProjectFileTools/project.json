@@ -41,7 +41,7 @@
     "RoslynTools.Microsoft.SignTool": "0.3.3-beta",
     "stdole": "7.0.3303",
     "System.Diagnostics.DiagnosticSource": "4.5.0",
-    "System.Net.Http": "4.3.0"
+    "System.Net.Http": "4.0.0"
   },
   "runtimes": {
     "win": {}
