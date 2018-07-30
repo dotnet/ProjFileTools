@@ -83,7 +83,7 @@ namespace ProjectFileTools
             {
                 TextView.TextBuffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDoc);
                 XmlInfo info = XmlTools.GetXmlInfo(TextView.TextSnapshot, TextView.Caret.Position.BufferPosition.Position);
-                if (info != null)
+                if (info?.AttributeName != null)
                 {
                     prgCmds[0].cmdf = (uint)(OLECMDF.OLECMDF_SUPPORTED | OLECMDF.OLECMDF_ENABLED);
                     return VSConstants.S_OK;

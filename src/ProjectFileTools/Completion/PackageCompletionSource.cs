@@ -59,7 +59,7 @@ namespace ProjectFileTools.Completion
         {
             XmlInfo info = XmlTools.GetXmlInfo(snapshot, pos);
 
-            if (TryGetPackageInfoFromXml(info, out packageName, out packageVersion) && AttributeToCompletionTypeMap.TryGetValue(info.AttributeName, out completionType))
+            if (info?.AttributeName != null && TryGetPackageInfoFromXml(info, out packageName, out packageVersion) && AttributeToCompletionTypeMap.TryGetValue(info.AttributeName, out completionType))
             {
                 span = new Span(info.AttributeValueStart, info.AttributeValueLength);
                 return true;
@@ -74,7 +74,7 @@ namespace ProjectFileTools.Completion
 
         public static bool TryGetPackageInfoFromXml(XmlInfo info, out string packageName, out string packageVersion)
         {
-            if (info != null
+            if (info?.AttributeName != null
                 && (info.TagName == "PackageReference" || info.TagName == "DotNetCliToolReference")
                 && info.AttributeName != null && AttributeToCompletionTypeMap.ContainsKey(info.AttributeName)
                 && info.TryGetElement(out XElement element))
@@ -95,7 +95,7 @@ namespace ProjectFileTools.Completion
         {
             XmlInfo info = XmlTools.GetXmlInfo(snapshot, pos);
 
-            if (info == null || !info.TryGetElement(out XElement element) || info.TagName != "PackageReference" && info.TagName != "DotNetCliToolReference")
+            if (info?.AttributeName == null || !info.TryGetElement(out XElement element) || info.TagName != "PackageReference" && info.TagName != "DotNetCliToolReference")
             {
                 isHealingRequired = false;
                 newText = null;

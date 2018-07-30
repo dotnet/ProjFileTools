@@ -31,6 +31,36 @@ namespace ProjectFileTools.Helpers
 
             if (startQuote > -1 && startQuote < start || end > -1 && endQuote > end)
             {
+                //We could be inside of an element here
+                int closeTag = (pos < documentText.Length ? documentText.LastIndexOf('>', pos) : documentText.LastIndexOf('>'));
+                bool isInsideTag = closeTag > start;
+
+                if (isInsideTag && closeTag > 1)
+                {
+                    if (documentText[closeTag - 1] == '/')
+                    {
+                        return null;
+                    }
+
+                    int nextOpen = documentText.IndexOf('<', closeTag);
+
+                    if (nextOpen < 0)
+                    {
+                        nextOpen = documentText.Length;
+                    }
+
+                    int elementNameEnd = documentText.IndexOf(' ', start);
+
+                    if (elementNameEnd < 0 || elementNameEnd > closeTag)
+                    {
+                        elementNameEnd = closeTag;
+                    }
+
+                    string elementName = documentText.Substring(start + 1, elementNameEnd - start - 1);
+                    string text = documentText.Substring(closeTag + 1, nextOpen - closeTag - 1);
+                    return new XmlInfo(text, text, closeTag + 1, nextOpen - 1, closeTag, nextOpen, false, nextOpen - 1, elementName, null);
+                }
+
                 return null;
             }
 
