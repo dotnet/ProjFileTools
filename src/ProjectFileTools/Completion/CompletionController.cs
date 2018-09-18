@@ -156,37 +156,45 @@ namespace ProjectFileTools.Completion
 
         bool Complete(bool force)
         {
-            if (_currentSession == null)
+            var currentSession = _currentSession;
+
+            if (currentSession == null)
             {
                 if (Broker.IsCompletionActive(TextView))
                 {
-                    _currentSession = Broker.GetSessions(TextView).FirstOrDefault();
+                    currentSession = Broker.GetSessions(TextView).FirstOrDefault();
                 }
 
-                if (_currentSession == null)
+                _currentSession = currentSession;
+
+                if (currentSession == null)
                 {
                     return false;
                 }
 
-                _currentSession.Dismissed += (sender, args) =>
+                currentSession.Dismissed += (sender, args) =>
                 {
-                    _currentSession.Committed -= HandleCompletionSessionCommit;
+                    currentSession.Committed -= HandleCompletionSessionCommit;
                     _currentSession = null;
                 };
-                _currentSession.Committed += HandleCompletionSessionCommit;
+                currentSession.Committed += HandleCompletionSessionCommit;
             }
 
-            if (_currentSession.SelectedCompletionSet != null && _currentSession.SelectedCompletionSet.SelectionStatus != null && !_currentSession.SelectedCompletionSet.SelectionStatus.IsSelected && !force)
+            if (currentSession.SelectedCompletionSet != null && currentSession.SelectedCompletionSet.SelectionStatus != null && !currentSession.SelectedCompletionSet.SelectionStatus.IsSelected && !force)
             {
-                _currentSession.Dismiss();
+                currentSession.Dismiss();
                 _currentSession = null;
                 return false;
             }
-            else
+            else if (currentSession.SelectedCompletionSet != null && currentSession.SelectedCompletionSet.SelectionStatus != null)
             {
-                _currentSession.Commit();
+                currentSession.Commit();
                 _currentSession = null;
                 return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
@@ -209,26 +217,33 @@ namespace ProjectFileTools.Completion
             }
 
             ITextSnapshot snapshot = caret.Snapshot;
+            ICompletionSession currentSession = _currentSession;
 
             if (!Broker.IsCompletionActive(TextView))
             {
-                _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
+                currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
             }
             else
             {
-                _currentSession = Broker.GetSessions(TextView)[0];
+                currentSession = Broker.GetSessions(TextView)[0];
             }
-            _currentSession.Dismissed += (sender, args) =>
-            {
-                _currentSession.Committed -= HandleCompletionSessionCommit;
-                _currentSession = null;
-            };
 
-            _currentSession.Committed += HandleCompletionSessionCommit;
+            _currentSession = currentSession;
 
-            if (!_currentSession.IsStarted)
+            if (currentSession != null)
             {
-                _currentSession.Start();
+                currentSession.Dismissed += (sender, args) =>
+                {
+                    currentSession.Committed -= HandleCompletionSessionCommit;
+                    _currentSession = null;
+                };
+
+                currentSession.Committed += HandleCompletionSessionCommit;
+
+                if (!currentSession.IsStarted)
+                {
+                    currentSession.Start();
+                }
             }
 
             return true;
@@ -237,6 +252,12 @@ namespace ProjectFileTools.Completion
         private void HandleCompletionSessionCommit(object sender, EventArgs e)
         {
             CompletionSet completionSet = ((ICompletionSession)sender).SelectedCompletionSet;
+
+            if (completionSet == null)
+            {
+                return;
+            }
+
             SnapshotSpan span = completionSet.ApplicableTo.GetSpan(completionSet.ApplicableTo.TextBuffer.CurrentSnapshot);
             int caret = span.Span.Start;
 
