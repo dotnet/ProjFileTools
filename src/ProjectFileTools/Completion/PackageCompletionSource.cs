@@ -52,6 +52,12 @@ namespace ProjectFileTools.Completion
             _searchManager = searchManager;
             _textBuffer = textBuffer;
             _completionBroker = completionBroker;
+
+            if (textBuffer.Properties.ContainsProperty(typeof(PackageCompletionSource)))
+            {
+                textBuffer.Properties.RemoveProperty(typeof(PackageCompletionSource));
+            }
+
             textBuffer.Properties.AddProperty(typeof(PackageCompletionSource), this);
         }
 
