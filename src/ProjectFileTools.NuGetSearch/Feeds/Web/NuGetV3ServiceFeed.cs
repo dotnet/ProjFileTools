@@ -97,6 +97,11 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
                     baseUrl += "/";
                 }
 
+                if (baseUrl.Length < 2)
+                {
+                    return null;
+                }
+
                 int lastSlashIndex = baseUrl.LastIndexOf('/', baseUrl.Length - 2);
 
                 //If the only slash in the value we're processing is the one we just added,

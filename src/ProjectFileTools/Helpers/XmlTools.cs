@@ -24,7 +24,7 @@ namespace ProjectFileTools.Helpers
 
             int start = pos < documentText.Length ? documentText.LastIndexOf('<', pos) : documentText.LastIndexOf('<');
             int end = pos < documentText.Length ? documentText.IndexOf('>', pos) : -1;
-            int startQuote = documentText.LastIndexOf('"', pos - 1);
+            int startQuote = pos <= documentText.Length ? documentText.LastIndexOf('"', pos - 1) : -1;
             int endQuote = pos < documentText.Length ? documentText.IndexOf('"', pos) : -1;
             int realEnd = end;
             bool isHealed = false;
@@ -146,7 +146,7 @@ namespace ProjectFileTools.Helpers
             else if (startQuote > start)
             {
                 //If we find a close before the cursor that's after the start quote, we're outside of the element
-                if (documentText.LastIndexOf('>', pos - 1) > startQuote)
+                if (pos > documentText.Length || documentText.LastIndexOf('>', pos - 1) > startQuote)
                 {
                     return null;
                 }
@@ -182,7 +182,7 @@ namespace ProjectFileTools.Helpers
 
             int indexAfterTagNameEnd = healedXml.FindFirstWhitespaceAtOrAfter(1);
             string tagName = healedXml.Substring(1, indexAfterTagNameEnd - 1);
-            int equalsIndex = healedXml.LastIndexOf('=', startQuote - start) - 1;
+            int equalsIndex = startQuote >= start && (startQuote - start) < healedXml.Length ? healedXml.LastIndexOf('=', startQuote - start) - 1 : -1;
             int afterAttributeIndex = healedXml.FindFirstNonWhitespaceAtOrBefore(equalsIndex, false);
             int beforeAttributeIndex = healedXml.FindFirstNonWhitespaceAtOrBefore(afterAttributeIndex, true);
             string attributeName = healedXml.Substring(beforeAttributeIndex + 1, afterAttributeIndex - beforeAttributeIndex);
