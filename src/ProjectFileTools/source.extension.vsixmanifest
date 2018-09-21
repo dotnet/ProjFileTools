@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="e22f3d7e-6b01-4ef8-b3cb-ea293a87b00e" Version="1.3.0" Language="en-US" Publisher="Microsoft" />
+        <Identity Id="e22f3d7e-6b01-4ef8-b3cb-ea293a87b00e" Version="1.3.1" Language="en-US" Publisher="Microsoft" />
         <DisplayName>Project File Tools</DisplayName>
         <Description xml:space="preserve">Provides Intellisense and other tooling for XML based project files such as .csproj and .vbproj files.</Description>
         <MoreInfo>https://marketplace.visualstudio.com/items?itemName=ms-madsk.ProjectFileTools</MoreInfo>
