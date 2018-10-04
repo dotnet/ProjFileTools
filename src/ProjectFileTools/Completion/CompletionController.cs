@@ -117,7 +117,8 @@ namespace ProjectFileTools.Completion
 
                 _currentSession.Dismissed += (sender, args) =>
                 {
-                    _currentSession.Committed -= HandleCompletionSessionCommit;
+                    if (sender is ICompletionSession session)
+                        session.Committed -= HandleCompletionSessionCommit;
                     _currentSession = null;
                 };
                 _currentSession.Committed += HandleCompletionSessionCommit;
@@ -174,7 +175,8 @@ namespace ProjectFileTools.Completion
 
                 currentSession.Dismissed += (sender, args) =>
                 {
-                    currentSession.Committed -= HandleCompletionSessionCommit;
+                    if (sender is ICompletionSession session)
+                        session.Committed -= HandleCompletionSessionCommit;
                     _currentSession = null;
                 };
                 currentSession.Committed += HandleCompletionSessionCommit;
@@ -234,7 +236,8 @@ namespace ProjectFileTools.Completion
             {
                 currentSession.Dismissed += (sender, args) =>
                 {
-                    currentSession.Committed -= HandleCompletionSessionCommit;
+                    if (sender is ICompletionSession session)
+                        session.Committed -= HandleCompletionSessionCommit;
                     _currentSession = null;
                 };
 
