@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using NuGet.Frameworks;
 using ProjectFileTools.NuGetSearch.Contracts;
 using ProjectFileTools.NuGetSearch.IO;
 using ProjectFileTools.NuGetSearch.Search;
@@ -83,7 +82,6 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Disk
             {
                 try
                 {
-                    NuGetFramework targetFramework = new NuGetFramework(queryConfiguration.CompatibiltyTarget);
                     List<IPackageInfo> infos = new List<IPackageInfo>();
                     foreach (string path in _fileSystem.EnumerateDirectories(_feed).Where(x => x.IndexOf(prefix, StringComparison.OrdinalIgnoreCase) > -1))
                     {
@@ -98,7 +96,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Disk
                         {
                             IPackageInfo info = NuSpecReader.Read(nuspec, FeedKind.Local);
 
-                            if (info != null && NuGetPackageMatcher.IsMatch(targetFramework, path, info, queryConfiguration, _fileSystem))
+                            if (info != null && NuGetPackageMatcher.IsMatch(path, info, queryConfiguration, _fileSystem))
                             {
                                 infos.Add(info);
 

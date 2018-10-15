@@ -37,7 +37,6 @@
     "Microsoft.VSSDK.BuildTools": "15.7.109",
     "Microsoft.Win32.Primitives": "4.3.0",
     "Newtonsoft.Json": "11.0.2",
-    "NuGet.VisualStudio": "4.8.0-preview1.5156",
     "RoslynTools.Microsoft.SignTool": "0.3.3-beta",
     "stdole": "7.0.3303",
     "System.Diagnostics.DiagnosticSource": "4.5.0",
