@@ -4,14 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using NuGet.Frameworks;
 using ProjectFileTools.NuGetSearch.Contracts;
 using ProjectFileTools.NuGetSearch.IO;
 using ProjectFileTools.NuGetSearch.Search;
 
 namespace ProjectFileTools.NuGetSearch.Feeds.Disk
 {
-
     internal class NuGetV3DiskFeed : IPackageFeed
     {
         private readonly string _feed;
@@ -85,7 +83,6 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Disk
             {
                 try
                 {
-                    NuGetFramework targetFramework = NuGetFramework.Parse(queryConfiguration.CompatibiltyTarget);
                     List<IPackageInfo> infos = new List<IPackageInfo>();
                     foreach (string path in _fileSystem.EnumerateDirectories(_feed, $"*{prefix}*", SearchOption.TopDirectoryOnly).Where(x => x.IndexOf(prefix, StringComparison.OrdinalIgnoreCase) > -1))
                     {
@@ -116,7 +113,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Disk
                             if (nuspec != null)
                             {
                                 IPackageInfo info = NuSpecReader.Read(nuspec, FeedKind.Local);
-                                if (info != null && NuGetPackageMatcher.IsMatch(targetFramework, verDir, info, queryConfiguration, _fileSystem))
+                                if (info != null && NuGetPackageMatcher.IsMatch(verDir, info, queryConfiguration, _fileSystem))
                                 {
                                     infos.Add(info);
 

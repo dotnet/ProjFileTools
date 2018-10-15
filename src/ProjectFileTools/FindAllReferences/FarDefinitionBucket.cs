@@ -57,6 +57,8 @@ public class FarDefinitionBucket : DefinitionBucket
             case StandardTableKeyNames.HelpLink:
                 content = "https://www.visualstudio.com/";
                 return true;
+            case "IPersistentSpan":
+                break;
             default:
                 Debug.Fail($"Unknown bucket key: {key}");
                 break;

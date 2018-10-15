@@ -88,6 +88,7 @@ namespace FarTestProvider
                 case StandardTableKeyNames.DetailsExpander:
                 case StandardTableColumnDefinitions2.LineText:
                 case StandardTableKeyNames2.ProjectNames:
+                case "IPersistentSpan":
                     break;
                 default:
                     Debug.Fail($"Unknown column key: {keyName}");

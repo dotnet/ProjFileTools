@@ -55,17 +55,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Compile Include="Adornments\DotnetCliToolReferenceGlyphTaggerProvider.cs" />
     <Compile Include="Adornments\HighlightWordFormatDefinition.cs" />
     <Compile Include="Adornments\HighlightWordTag.cs" />
     <Compile Include="Adornments\HighlightWordTagger.cs" />
     <Compile Include="Adornments\HighlightWordTaggerProvider.cs" />
-    <Compile Include="Adornments\IIntraTextAdornmentFactory.cs" />
-    <Compile Include="Adornments\IntraTextAdornmentTagger.cs" />
-    <Compile Include="Adornments\PackageGlyphTag.cs" />
-    <Compile Include="Adornments\PackageGlyphTagFactory.cs" />
-    <Compile Include="Adornments\PackageIconAdorner.cs" />
-    <Compile Include="Adornments\PackageReferenceGlyphTaggerProvider.cs" />
     <Compile Include="Completion\CompletionController.cs" />
     <Compile Include="Completion\CompletionTooltipElementProvider.cs" />
     <Compile Include="Completion\PackageCompletion.cs" />
