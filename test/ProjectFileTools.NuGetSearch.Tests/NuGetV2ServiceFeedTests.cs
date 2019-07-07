@@ -39,7 +39,7 @@ namespace ProjectFileTools.NuGetSearch.Tests
                 var webRequestFactory = Mock.Of<IWebRequestFactory>();
 
                 Mock.Get(webRequestFactory)
-                    .Setup(f => f.GetStringAsync("http://localhost/nuget/Search()?searchTerm=Common.Logging&targetFramework=netcoreapp2.0&includePrerelease=False", It.IsAny<CancellationToken>()))
+                    .Setup(f => f.GetStringAsync("http://localhost/nuget/Search()?searchTerm='Common.Logging'&targetFramework=netcoreapp2.0&includePrerelease=False", It.IsAny<CancellationToken>()))
                     .Returns(Task.FromResult(GetXmlFromTestFile(testFile)));
 
                 var sut = new NuGetV2ServiceFeed(feed, webRequestFactory);

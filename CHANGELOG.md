@@ -14,6 +14,7 @@ on the official Visual Studio extension gallery.
 
 ## 1.4
 - [x] Implement NuGet V2 Feed support
+- [x] Change WebRequestFactory to use a static HttpClient to avoid connection socket exhaustion problem
 
 ## 1.1
 

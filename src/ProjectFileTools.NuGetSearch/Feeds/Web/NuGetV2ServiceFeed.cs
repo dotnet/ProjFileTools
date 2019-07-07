@@ -84,7 +84,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
             IReadOnlyList<string> results = new List<string>();
             string frameworkQuery = !string.IsNullOrEmpty(queryConfiguration.CompatibiltyTarget) ? $"&targetFramework={queryConfiguration.CompatibiltyTarget}" : "";
             var serviceEndpoints = new[] { $"{_feed}/Search()" };
-            Func<string, string> queryFunc = x => $"{x}?searchTerm={prefix}{frameworkQuery}&includePrerelease={queryConfiguration.IncludePreRelease}";
+            Func<string, string> queryFunc = x => $"{x}?searchTerm='{prefix}'{frameworkQuery}&includePrerelease={queryConfiguration.IncludePreRelease}";
             XDocument document = await ExecuteAutocompleteServiceQueryAsync(serviceEndpoints, queryFunc, cancellationToken).ConfigureAwait(false);
 
             if (document != null)
