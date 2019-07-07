@@ -48,32 +48,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
 
         public string DisplayName => $"{_feed} (NuGet v2)";
 
-        private async Task<XDocument> ExecuteAutocompleteServiceQueryAsync(IEnumerable<string> endpoints, Func<string, string> query, CancellationToken cancellationToken)
-        {
-            if (endpoints == null)
-            {
-                return null;
-            }
-
-            for (int i = 0; i < endpoints.Count(); ++i)
-            {
-                string endpoint = endpoints.First();
-
-                try
-                {
-                    string location = query(endpoint);
-                    var xml = await _webRequestFactory.GetStringAsync(location, cancellationToken).ConfigureAwait(false);
-                    return XDocument.Parse(xml);
-                }
-                catch (Exception)
-                { 
-                    //TODO: Possibly log the failure to get the document 
-                }
-            }
-
-            return null;
-        }
-
+        
         public async Task<IPackageNameSearchResult> GetPackageNamesAsync(string prefix, IPackageQueryConfiguration queryConfiguration, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -83,9 +58,9 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
 
             IReadOnlyList<string> results = new List<string>();
             string frameworkQuery = !string.IsNullOrEmpty(queryConfiguration.CompatibiltyTarget) ? $"&targetFramework={queryConfiguration.CompatibiltyTarget}" : "";
-            var serviceEndpoints = new[] { $"{_feed}/Search()" };
+            var serviceEndpoint = $"{_feed}/Search()";
             Func<string, string> queryFunc = x => $"{x}?searchTerm='{prefix}'{frameworkQuery}&includePrerelease={queryConfiguration.IncludePreRelease}";
-            XDocument document = await ExecuteAutocompleteServiceQueryAsync(serviceEndpoints, queryFunc, cancellationToken).ConfigureAwait(false);
+            XDocument document = await ExecuteAutocompleteServiceQueryAsync(serviceEndpoint, queryFunc, cancellationToken).ConfigureAwait(false);
 
             if (document != null)
             {
@@ -109,9 +84,9 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
                 return null;
             }
 
-            var serviceEndpoints = new[] { $"{_feed}/Packages(Id='{packageId}',Version='{version}')" };
+            var serviceEndpoint = $"{_feed}/Packages(Id='{packageId}',Version='{version}')";
             Func<string, string> queryFunc = x => $"{x}";
-            XDocument document = await ExecuteAutocompleteServiceQueryAsync(serviceEndpoints, queryFunc, cancellationToken).ConfigureAwait(false);
+            XDocument document = await ExecuteAutocompleteServiceQueryAsync(serviceEndpoint, queryFunc, cancellationToken).ConfigureAwait(false);
 
             if (document != null)
             {
@@ -134,20 +109,12 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
             return null;
         }
 
-        private static string GetPropertyValue(XDocument document, XElement el, string propertyKey)
-        {
-            return el
-                    .Element(document.Root.GetNamespaceOfPrefix("m") + "properties")
-                    .Element(document.Root.GetNamespaceOfPrefix("d") + propertyKey)
-                    ?.Value;
-        }
-
         public async Task<IPackageVersionSearchResult> GetPackageVersionsAsync(string id, IPackageQueryConfiguration queryConfiguration, CancellationToken cancellationToken)
         {
             IReadOnlyList<string> results = new List<string>();
-            var serviceEndpoints = new[] { $"{_feed}/FindPackagesById()" };
+            var serviceEndpoint = $"{_feed}/FindPackagesById()";
             Func<string, string> queryFunc = x => $"{x}?id='{id}'";
-            XDocument document = await ExecuteAutocompleteServiceQueryAsync(serviceEndpoints, queryFunc, cancellationToken).ConfigureAwait(false);
+            XDocument document = await ExecuteAutocompleteServiceQueryAsync(serviceEndpoint, queryFunc, cancellationToken).ConfigureAwait(false);
 
             try
             {
@@ -160,6 +127,37 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
 
             return new PackageVersionSearchResult(results, _kind);
         }
+
+        private async Task<XDocument> ExecuteAutocompleteServiceQueryAsync(string endpoint, Func<string, string> query, CancellationToken cancellationToken)
+        {
+            if (endpoint == null)
+            {
+                return null;
+            }
+
+            try
+            {
+                string location = query(endpoint);
+                var xml = await _webRequestFactory.GetStringAsync(location, cancellationToken).ConfigureAwait(false);
+                return XDocument.Parse(xml);
+            }
+            catch (Exception)
+            {
+            }
+
+            return null;
+        }
+
+
+        private static string GetPropertyValue(XDocument document, XElement el, string propertyKey)
+        {
+            return el
+                    .Element(document.Root.GetNamespaceOfPrefix("m") + "properties")
+                    .Element(document.Root.GetNamespaceOfPrefix("d") + propertyKey)
+                    ?.Value;
+        }
+
+        
 
         private static IReadOnlyList<string> GetPackageVersionsFromNuGetV2CompatibleQueryResult(string id, XDocument document)
         {
@@ -180,7 +178,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
                 }
             }
 
-            return results.AsReadOnly();
+            return results;
         }
 
         private static IReadOnlyList<string> GetPackageNamesFromNuGetV2CompatibleQueryResult(XDocument document)
@@ -189,15 +187,15 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
 
             if (document != null)
             {
-                foreach (var el in document.Root.Elements(document.Root.GetDefaultNamespace() +"entry"))
+                foreach (var el in document.Root.Elements(document.Root.GetDefaultNamespace() + "entry"))
                 {
                     var id = GetPropertyValue(document, el, "Id");
 
                     results.Add(id);
                 }
             }
-            
-            return results.Distinct().ToList().AsReadOnly();
+
+            return results.Distinct().ToList();
         }
     }
 }
