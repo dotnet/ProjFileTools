@@ -1,6 +1,6 @@
 using System;
 using System.Threading;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+// using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NuGet.Frameworks;
 using ProjectFileTools.NuGetSearch.Contracts;
 using ProjectFileTools.NuGetSearch.Feeds;
@@ -9,10 +9,10 @@ using ProjectFileTools.NuGetSearch.IO;
 
 namespace PackageFeedManagerTests
 {
-    [TestClass]
+    // [TestClass]
     public class UnitTest1
     {
-        [TestMethod]
+        // [TestMethod]
         public void TestMethod1()
         {
             //IFileSystem fileSystem = new MockFileSystem();

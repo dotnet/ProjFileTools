@@ -49,6 +49,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Exports\ExportedNuGetV2ServiceFeedFactory.cs" />
     <Compile Include="Helpers\XmlInfo.cs" />
     <Compile Include="Helpers\XmlTools.cs" />
     <Page Include="**\*.xaml">
