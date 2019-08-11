@@ -59,7 +59,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
             IReadOnlyList<string> results = new List<string>();
             string frameworkQuery = !string.IsNullOrEmpty(queryConfiguration.CompatibiltyTarget) ? $"&targetFramework={queryConfiguration.CompatibiltyTarget}" : "";
             var serviceEndpoint = $"{_feed}/Search()";
-            Func<string, string> queryFunc = x => $"{x}?searchTerm='{prefix}'{frameworkQuery}&includePrerelease={queryConfiguration.IncludePreRelease}";
+            Func<string, string> queryFunc = x => $"{x}?searchTerm='{prefix}'{frameworkQuery}&includePrerelease={queryConfiguration.IncludePreRelease}&semVerLevel=2.0.0";
             XDocument document = await ExecuteAutocompleteServiceQueryAsync(serviceEndpoint, queryFunc, cancellationToken).ConfigureAwait(false);
 
             if (document != null)
@@ -148,7 +148,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
             return null;
         }
 
-
+            
         private static string GetPropertyValue(XDocument document, XElement el, string propertyKey)
         {
             return el
