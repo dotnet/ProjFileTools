@@ -12,6 +12,12 @@ namespace ProjectFileTools.NuGetSearch.IO
             try
             {
                 HttpResponseMessage responseMessage = await _httpClient.GetAsync(endpoint, cancellationToken).ConfigureAwait(false);
+                if (responseMessage.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    // avoid a first-chance exception on 404
+                    return null;
+                }
+
                 responseMessage.EnsureSuccessStatusCode();
                 return await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
             }
