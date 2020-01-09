@@ -1,14 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
 namespace ProjectFileTools.NuGetSearch.IO
 {
-
     public class FileSystem : IFileSystem
     {
         public bool DirectoryExists(string path)
         {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            // avoid a first-chance exception in Directory.Exists if we know it's a URL anyway
+            if (path.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
             return path.IndexOfAny(Path.GetInvalidPathChars()) < 0 && Directory.Exists(path);
         }
 
@@ -52,5 +63,4 @@ namespace ProjectFileTools.NuGetSearch.IO
             return File.ReadAllText(path);
         }
     }
-
 }
