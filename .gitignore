@@ -12,6 +12,7 @@ packages
 x64/
 [Bb]in/
 [Oo]bj/
+*.binlog
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
