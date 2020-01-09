@@ -12,6 +12,10 @@ download in the
 These are the changes to each version that has been released
 on the official Visual Studio extension gallery.
 
+## 1.4
+- [x] Implement NuGet V2 Feed support
+- [x] Change WebRequestFactory to use a static HttpClient to avoid connection socket exhaustion problem
+
 ## 1.1
 
 - [x] Go To Definition (F12) for MSBuild imports
