@@ -22,6 +22,9 @@ namespace ProjectFileTools.Completion
         private static readonly IReadOnlyDictionary<string, string> AttributeToCompletionTypeMap = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             {"Include", "Name" },
+            {"Update", "Name" },
+            {"Exclude", "Name" },
+            {"Remove", "Name" },
             {"Version", "Version" }
         };
 
@@ -85,7 +88,10 @@ namespace ProjectFileTools.Completion
                 && info.AttributeName != null && AttributeToCompletionTypeMap.ContainsKey(info.AttributeName)
                 && info.TryGetElement(out XElement element))
             {
-                XAttribute name = element.Attribute(XName.Get("Include"));
+                XAttribute name = element.Attribute(XName.Get("Include"))
+                    ?? element.Attribute(XName.Get("Update"))
+                    ?? element.Attribute(XName.Get("Exclude"))
+                    ?? element.Attribute(XName.Get("Remove"));
                 XAttribute version = element.Attribute(XName.Get("Version"));
                 packageName = name?.Value;
                 packageVersion = version?.Value;
