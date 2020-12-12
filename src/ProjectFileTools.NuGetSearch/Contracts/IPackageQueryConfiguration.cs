@@ -1,11 +1,13 @@
-﻿namespace ProjectFileTools.NuGetSearch.Contracts
+namespace ProjectFileTools.NuGetSearch.Contracts
 {
     public interface IPackageQueryConfiguration
     {
-        string CompatibiltyTarget { get; }
+        string CompatibilityTarget { get; }
 
         bool IncludePreRelease { get; }
 
         int MaxResults { get; }
+
+        PackageType PackageType { get; }
     }
 }
