@@ -37,10 +37,10 @@
     "Microsoft.VSSDK.BuildTools": "15.7.109",
     "Microsoft.Win32.Primitives": "4.3.0",
     "Newtonsoft.Json": "11.0.2",
-    "RoslynTools.Microsoft.SignTool": "0.3.3-beta",
+    "RoslynTools.SignTool": "1.1.0-beta3.21260.1",
     "stdole": "7.0.3303",
     "System.Diagnostics.DiagnosticSource": "4.5.0",
-    "System.Net.Http": "4.0.0"
+    "System.Net.Http": "4.3.2"
   },
   "runtimes": {
     "win": {}
