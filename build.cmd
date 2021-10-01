@@ -6,7 +6,7 @@ set Root=%~dp0
 set BuildConfiguration=Debug
 set MSBuildTarget=Build
 set NodeReuse=true
-set DeveloperCommandPrompt=%VS150COMNTOOLS%\VsDevCmd.bat
+set DeveloperCommandPrompt=%VS160COMNTOOLS%\VsDevCmd.bat
 set MSBuildAdditionalArguments=/m
 set RunTests=true
 set DeployVsixExtension=true
@@ -41,13 +41,13 @@ if not exist "%VS160COMNTOOLS%" (
   exit /b 1
 )
 
-if not exist "%VSSDK150Install%" (
+if not exist "%VSSDKInstall%" (
   echo To build this repository, you need to modify your Visual Studio installation to include the "Visual Studio extension development" workload.
   exit /b 1
 )
 
 if "%VisualStudioVersion%" == "" (
-  REM In Jenkins and MicroBuild, we set VS150COMNTOOLS and VSSDK150Install to point to where VS is installed but don't launch in a developer prompt
+  REM In Jenkins and MicroBuild, we set VS160COMNTOOLS and VSSDKInstall to point to where VS is installed but don't launch in a developer prompt
   call "%DeveloperCommandPrompt%" || goto :BuildFailed
 )
 
@@ -113,7 +113,7 @@ if "%NuGetHome%" == "" (
 )
 set SignTool="%NuGetHome%\roslyntools.signtool\1.1.0-beta3.21260.1\tools\SignTool.exe"
 
-%SignTool% -config "%Root%build\Signing\SignToolConfig.json" -msbuildPath "%VS150COMNTOOLS%..\..\MSBuild\15.0\Bin\msbuild.exe" "%Root%bin\%BuildConfiguration%"
+%SignTool% -config "%Root%build\Signing\SignToolConfig.json" -msbuildPath "%VS160COMNTOOLS%..\..\MSBuild\16.0\Bin\msbuild.exe" "%Root%bin\%BuildConfiguration%"
 if ERRORLEVEL 1 (
     echo.
     call :PrintColor Red "Signing failed"
