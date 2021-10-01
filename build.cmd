@@ -85,7 +85,7 @@ echo.
 call :PrintColor Green "Build completed successfully, for full log see %LogFile%"
 
 if "%RunTests%" == "false" (
-    goto :Signing
+    exit /b 0
 )
 
 echo.
@@ -97,30 +97,6 @@ if ERRORLEVEL 1 (
     exit /b 1
 )
 
-:Signing
-if NOT "%OfficialBuild%" == "true" (
-    exit /b 0
-)
-
-echo.
-echo Signing binaries
-
-REM Respect the %NUGET_PACKAGES% environment variable if set, as that's where nuget will restore to
-set NuGetHome=%NUGET_PACKAGES%
-if "%NuGetHome%" == "" (
-    REM If it's not set, the nuget cache is in the user's home dir
-    set NuGetHome=%UserProfile%\.nuget\packages
-)
-set SignTool="%NuGetHome%\roslyntools.signtool\1.1.0-beta3.21260.1\tools\SignTool.exe"
-
-%SignTool% -config "%Root%build\Signing\SignToolConfig.json" -msbuildPath "%VS160COMNTOOLS%..\..\MSBuild\Current\Bin\msbuild.exe" "%Root%bin\%BuildConfiguration%"
-if ERRORLEVEL 1 (
-    echo.
-    call :PrintColor Red "Signing failed"
-    exit /b 1
-)
-
-call :PrintColor Green "Signing completed. See output Binaries in %Root%build\%BuildConfiguration%"
 exit /b 0
 
 :Usage

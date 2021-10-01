@@ -34,6 +34,7 @@
     "Microsoft.VisualStudio.Threading": "15.8.132",
     "Microsoft.VisualStudio.Utilities": "15.7.27703",
     "Microsoft.VisualStudio.Validation": "15.3.58",
+    "Microsoft.VisualStudioEng.MicroBuild.Core": "0.4.1",
     "Microsoft.VSSDK.BuildTools": "15.7.109",
     "Microsoft.Win32.Primitives": "4.3.0",
     "Newtonsoft.Json": "11.0.2",
