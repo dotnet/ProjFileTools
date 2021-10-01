@@ -113,7 +113,7 @@ if "%NuGetHome%" == "" (
 )
 set SignTool="%NuGetHome%\roslyntools.signtool\1.1.0-beta3.21260.1\tools\SignTool.exe"
 
-%SignTool% -config "%Root%build\Signing\SignToolConfig.json" -msbuildPath "%VS160COMNTOOLS%..\..\MSBuild\16.0\Bin\msbuild.exe" "%Root%bin\%BuildConfiguration%"
+%SignTool% -config "%Root%build\Signing\SignToolConfig.json" -msbuildPath "%VS160COMNTOOLS%..\..\MSBuild\Current\Bin\msbuild.exe" "%Root%bin\%BuildConfiguration%"
 if ERRORLEVEL 1 (
     echo.
     call :PrintColor Red "Signing failed"
