@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26606.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31803.25
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectFileTools", "src\ProjectFileTools\ProjectFileTools.csproj", "{4FE11F73-0836-4630-9B92-712D0482CFCB}"
 EndProject
@@ -32,7 +32,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Signing", "Signing", "{7A3C8AE5-1C1C-4087-B5E2-B61BC1970FDE}"
 	ProjectSection(SolutionItems) = preProject
 		build\Signing\Signing.props = build\Signing\Signing.props
-		build\Signing\SignToolConfig.json = build\Signing\SignToolConfig.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StrongNameKeys", "StrongNameKeys", "{01F0EC18-761B-4FEC-B9A0-39AB17167B58}"
@@ -75,5 +74,8 @@ Global
 		{7A3C8AE5-1C1C-4087-B5E2-B61BC1970FDE} = {9AB88CF8-3AED-42E1-845B-97978A9A7A5C}
 		{01F0EC18-761B-4FEC-B9A0-39AB17167B58} = {9AB88CF8-3AED-42E1-845B-97978A9A7A5C}
 		{C2C10E1F-A307-49FC-9D9A-106FCBE88B91} = {1479D323-9D5A-4D0C-84BE-8A7F9FC8BD8E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2FE037C9-333A-496F-B7ED-746049B8B2D0}
 	EndGlobalSection
 EndGlobal
