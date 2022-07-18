@@ -26,7 +26,9 @@ namespace ProjectFileTools.NuGetSearch.Contracts
         {
             int hashCode = -612338121;
             hashCode = hashCode * -1521134295 + StringComparer.Ordinal.GetHashCode(Name);
-            hashCode = hashCode * -1521134295 + StringComparer.Ordinal.GetHashCode(Version);
+			if (Version is not null) {
+				hashCode = hashCode * -1521134295 + StringComparer.Ordinal.GetHashCode(Version);
+			}
             return hashCode;
         }
     }

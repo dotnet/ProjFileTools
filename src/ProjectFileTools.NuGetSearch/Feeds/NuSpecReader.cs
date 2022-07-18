@@ -28,8 +28,8 @@ namespace ProjectFileTools.NuGetSearch.Feeds
             XElement packageTypesEl = metadata?.Element(XName.Get("packageTypes", ns.NamespaceName));
             if (packageTypesEl != null)
             {
-                var nameName = XName.Get("name", ns.NamespaceName);
-                var versionName = XName.Get("name", ns.NamespaceName);
+                var nameName = XName.Get("name");
+                var versionName = XName.Get("version");
                 packageTypes = new List<PackageType>();
                 foreach (var packageType in packageTypesEl.Elements(XName.Get("packageType", ns.NamespaceName)))
                 {
