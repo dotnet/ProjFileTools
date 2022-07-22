@@ -1,4 +1,5 @@
-﻿using ProjectFileTools.NuGetSearch.Feeds;
+using System.Collections.Generic;
+using ProjectFileTools.NuGetSearch.Feeds;
 
 namespace ProjectFileTools.NuGetSearch.Contracts
 {
@@ -23,6 +24,8 @@ namespace ProjectFileTools.NuGetSearch.Contracts
         string IconUrl { get; }
 
         string Tags { get; }
+
+        IReadOnlyList<PackageType> PackageTypes { get; }
 
         FeedKind SourceKind { get; }
     }

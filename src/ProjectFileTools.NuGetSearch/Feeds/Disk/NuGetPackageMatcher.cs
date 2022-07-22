@@ -1,4 +1,6 @@
-﻿using ProjectFileTools.NuGetSearch.Contracts;
+using System.Linq;
+
+using ProjectFileTools.NuGetSearch.Contracts;
 using ProjectFileTools.NuGetSearch.IO;
 
 namespace ProjectFileTools.NuGetSearch.Feeds.Disk
@@ -17,7 +19,16 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Disk
                 }
             }
 
-			return true;
+            if (queryConfiguration.PackageType != null)
+            {
+                //NOTE: can't find any info on how the version is supposed to be handled (or what it's even for), so use an exact match
+                if (!info.PackageTypes.Any(p => queryConfiguration.PackageType.Equals(p)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

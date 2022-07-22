@@ -1,11 +1,13 @@
-﻿using ProjectFileTools.NuGetSearch.Contracts;
+using System.Collections.Generic;
+
+using ProjectFileTools.NuGetSearch.Contracts;
 
 namespace ProjectFileTools.NuGetSearch.Feeds
 {
 
     public class PackageInfo : IPackageInfo
     {
-        public PackageInfo(string id, string version, string title, string authors, string summary, string description, string licenseUrl, string projectUrl, string iconUrl, string tags, FeedKind sourceKind)
+        public PackageInfo(string id, string version, string title, string authors, string summary, string description, string licenseUrl, string projectUrl, string iconUrl, string tags, FeedKind sourceKind, IReadOnlyList<PackageType> packageTypes)
         {
             Id = id;
             Version = version;
@@ -17,6 +19,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds
             SourceKind = sourceKind;
             IconUrl = iconUrl;
             Tags = tags;
+            PackageTypes = packageTypes ?? PackageType.DefaultList;
         }
 
         public string Id { get; }
@@ -40,5 +43,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds
         public string Tags { get; }
 
         public FeedKind SourceKind { get; }
+
+        public IReadOnlyList<PackageType> PackageTypes { get; }
     }
 }

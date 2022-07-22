@@ -1,34 +1,37 @@
-﻿using ProjectFileTools.NuGetSearch.Contracts;
+using ProjectFileTools.NuGetSearch.Contracts;
 
 namespace ProjectFileTools.NuGetSearch.Feeds
 {
     public class PackageQueryConfiguration : IPackageQueryConfiguration
     {
-        public PackageQueryConfiguration(string targetFrameworkMoniker, bool includePreRelease = true, int maxResults = 100)
+        public PackageQueryConfiguration(string targetFrameworkMoniker, bool includePreRelease = true, int maxResults = 100, PackageType packageType = null)
         {
-            CompatibiltyTarget = targetFrameworkMoniker;
+            CompatibilityTarget = targetFrameworkMoniker;
             IncludePreRelease = includePreRelease;
             MaxResults = maxResults;
+            PackageType = packageType;
         }
 
-        public string CompatibiltyTarget { get; }
+        public string CompatibilityTarget { get; }
 
         public bool IncludePreRelease { get; }
 
         public int MaxResults { get; }
 
+        public PackageType PackageType { get; }
+
         public override int GetHashCode()
         {
-            return (CompatibiltyTarget?.GetHashCode() ?? 0) ^ IncludePreRelease.GetHashCode() ^ MaxResults.GetHashCode();
+            return (CompatibilityTarget?.GetHashCode() ?? 0) ^ IncludePreRelease.GetHashCode() ^ MaxResults.GetHashCode() ^ (PackageType?.GetHashCode() ?? 0);
         }
 
         public override bool Equals(object obj)
         {
-            PackageQueryConfiguration cfg = obj as PackageQueryConfiguration;
-            return cfg != null
-                && string.Equals(CompatibiltyTarget, cfg.CompatibiltyTarget, System.StringComparison.Ordinal)
+            return obj is PackageQueryConfiguration cfg
+                && string.Equals(CompatibilityTarget, cfg.CompatibilityTarget, System.StringComparison.Ordinal)
                 && IncludePreRelease == cfg.IncludePreRelease
-                && MaxResults == cfg.MaxResults;
+                && MaxResults == cfg.MaxResults
+                && (PackageType?.Equals(cfg.PackageType) ?? false);
         }
     }
 }

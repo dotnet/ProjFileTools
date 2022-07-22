@@ -1,4 +1,5 @@
-﻿using System.Xml.Linq;
+using System.Collections.Generic;
+using System.Xml.Linq;
 using ProjectFileTools.NuGetSearch.Contracts;
 
 namespace ProjectFileTools.NuGetSearch.Feeds
@@ -23,9 +24,26 @@ namespace ProjectFileTools.NuGetSearch.Feeds
             XElement iconUrl = metadata?.Element (XName.Get ("iconUrl", ns.NamespaceName));
             XElement tags = metadata?.Element(XName.Get("tags", ns.NamespaceName));
 
+            List<PackageType> packageTypes = null;
+            XElement packageTypesEl = metadata?.Element(XName.Get("packageTypes", ns.NamespaceName));
+            if (packageTypesEl != null)
+            {
+                var nameName = XName.Get("name");
+                var versionName = XName.Get("version");
+                packageTypes = new List<PackageType>();
+                foreach (var packageType in packageTypesEl.Elements(XName.Get("packageType", ns.NamespaceName)))
+                {
+                    var typeName = packageType.Attribute(nameName).Value;
+                    var typeVersion = packageType.Attribute(versionName)?.Value;
+                    packageTypes.Add (new PackageType(typeName, typeVersion));
+                }
+            }
+
             if (id != null)
             {
-                return new PackageInfo(id.Value, version?.Value, title?.Value, authors?.Value, summary?.Value, description?.Value, licenseUrl?.Value, projectUrl?.Value, iconUrl?.Value, tags?.Value, kind);
+                return new PackageInfo(
+                    id.Value, version?.Value, title?.Value, authors?.Value, summary?.Value, description?.Value,
+                    licenseUrl?.Value, projectUrl?.Value, iconUrl?.Value, tags?.Value, kind, packageTypes);
             }
 
             return null;
