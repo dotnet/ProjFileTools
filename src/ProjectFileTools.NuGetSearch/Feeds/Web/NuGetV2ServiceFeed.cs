@@ -57,7 +57,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
             }
 
             IReadOnlyList<string> results = new List<string>();
-            string frameworkQuery = !string.IsNullOrEmpty(queryConfiguration.CompatibiltyTarget) ? $"&targetFramework={queryConfiguration.CompatibiltyTarget}" : "";
+            string frameworkQuery = !string.IsNullOrEmpty(queryConfiguration.CompatibilityTarget) ? $"&targetFramework={queryConfiguration.CompatibilityTarget}" : "";
             var serviceEndpoint = $"{_feed}/Search()";
             Func<string, string> queryFunc = x => $"{x}?searchTerm='{prefix}'{frameworkQuery}&includePrerelease={queryConfiguration.IncludePreRelease}&semVerLevel=2.0.0";
             XDocument document = await ExecuteAutocompleteServiceQueryAsync(serviceEndpoint, queryFunc, cancellationToken).ConfigureAwait(false);
@@ -101,7 +101,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
                 var licenseUrl = GetPropertyValue(document, el, "LicenseUrl");
                 var iconUrl = GetPropertyValue(document, el, "IconUrl");
                 var tags = GetPropertyValue(document, el, "Tags");
-                var packageInfo = new PackageInfo(id, version, title, authors, summary, description, licenseUrl, projectUrl, iconUrl, tags, _kind);
+                var packageInfo = new PackageInfo(id, version, title, authors, summary, description, licenseUrl, projectUrl, iconUrl, tags, _kind, null);
                 return packageInfo;
             }
 
