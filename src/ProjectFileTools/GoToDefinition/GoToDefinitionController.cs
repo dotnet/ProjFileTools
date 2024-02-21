@@ -145,7 +145,7 @@ namespace ProjectFileTools
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            if (info.AttributeName == "Include")
+            if (info.AttributeName == "Include" || info.AttributeName == "Update" || info.AttributeName == "Exclude" || info.AttributeName == "Remove")
             {
                 string relativePath = info.AttributeValue;
                 IWorkspace workspace = workspaceManager.GetWorkspace(textDoc.FilePath);
