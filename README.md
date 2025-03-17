@@ -1,3 +1,17 @@
+# ProjFileTools Archived
+
+This project was an experiment for older versions of Visual Studio that we have not carried forward in the same manner.
+
+As part of creating transparency of the state of the repo, we are archiving this repo in current state. All issues will remain unresolved with regard to this source code.
+
+For alternative extensions that are more recent we recommend looking at [MSBuild Editor](https://marketplace.visualstudio.com/items?itemName=mhutch.MSBuildEditor).
+
+In addition, you may log feature suggestions on [Developer Community](https://developercommunity.visualstudio.com/VisualStudio) that can be upvoted by others to help us in our prioritization of different features that go into Visual Studio.
+
+
+
+---------------------------------------
+
 # Project File Tools
 
 <!-- Replace this badge with your own-->
