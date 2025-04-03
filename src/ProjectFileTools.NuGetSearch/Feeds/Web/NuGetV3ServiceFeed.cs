@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -192,10 +192,11 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
             }
 
             IReadOnlyList<string> results = new List<string>();
-            string frameworkQuery = !string.IsNullOrEmpty(queryConfiguration.CompatibiltyTarget) ? $"&supportedFramework={queryConfiguration.CompatibiltyTarget}" : "";
-            const string autoCompleteServiceTypeIdentifier = "SearchAutocompleteService";
+            string frameworkQuery = !string.IsNullOrEmpty(queryConfiguration.CompatibilityTarget) ? $"&supportedFramework={queryConfiguration.CompatibilityTarget}" : "";
+            string packageTypeQuery = !string.IsNullOrEmpty(queryConfiguration.PackageType?.Name) ? $"&packageType={queryConfiguration.PackageType.Name}" : "";
+            const string autoCompleteServiceTypeIdentifier = "SearchAutocompleteService/3.5.0";
             List<string> serviceEndpoints = await DiscoverEndpointsAsync(_feed, autoCompleteServiceTypeIdentifier, cancellationToken).ConfigureAwait(false);
-            Func<string, string> queryFunc = x => $"{x}?q={prefix}{frameworkQuery}&take={queryConfiguration.MaxResults}&prerelease={queryConfiguration.IncludePreRelease}";
+            Func<string, string> queryFunc = x => $"{x}?q={prefix}&semVerLevel=2.0.0{frameworkQuery}{packageTypeQuery}&take={queryConfiguration.MaxResults}&prerelease={queryConfiguration.IncludePreRelease}";
             JObject document = await ExecuteAutocompleteServiceQueryAsync(serviceEndpoints, queryFunc, cancellationToken).ConfigureAwait(false);
 
             if (document != null)
@@ -294,7 +295,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
                                         licenseUrl = catalogEntry["licenseUrl"]?.ToString();
                                         iconUrl = catalogEntry["iconUrl"]?.ToString();
                                         tags = catalogEntry ["tags"]?.ToString ();
-                                        packageInfo = new PackageInfo(id, version, title, authors, summary, description, licenseUrl, projectUrl, iconUrl, tags, _kind);
+                                        packageInfo = new PackageInfo(id, version, title, authors, summary, description, licenseUrl, projectUrl, iconUrl, tags, _kind, null);
                                         return packageInfo;
                                     }
                                 }
@@ -311,7 +312,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
                                         licenseUrl = catalogEntry["licenseUrl"]?.ToString();
                                         iconUrl = catalogEntry["iconUrl"]?.ToString ();
                                         tags = catalogEntry["tags"]?.ToString();
-                                        packageInfo = new PackageInfo(id, version, title, authors, summary, description, licenseUrl, projectUrl, iconUrl, tags, _kind);
+                                        packageInfo = new PackageInfo(id, version, title, authors, summary, description, licenseUrl, projectUrl, iconUrl, tags, _kind, null);
                                         bestSemanticVersion = currentVersion;
                                     }
                                 }
@@ -329,7 +330,7 @@ namespace ProjectFileTools.NuGetSearch.Feeds.Web
         public async Task<IPackageVersionSearchResult> GetPackageVersionsAsync(string id, IPackageQueryConfiguration queryConfiguration, CancellationToken cancellationToken)
         {
             IReadOnlyList<string> results = new List<string>();
-            string frameworkQuery = !string.IsNullOrEmpty(queryConfiguration.CompatibiltyTarget) ? $"&supportedFramework={queryConfiguration.CompatibiltyTarget}" : "";
+            string frameworkQuery = !string.IsNullOrEmpty(queryConfiguration.CompatibilityTarget) ? $"&supportedFramework={queryConfiguration.CompatibilityTarget}" : "";
             const string autoCompleteServiceTypeIdentifier = "SearchAutocompleteService";
             List<string> serviceEndpoints = await DiscoverEndpointsAsync(_feed, autoCompleteServiceTypeIdentifier, cancellationToken).ConfigureAwait(false);
             Func<string, string> queryFunc = x => $"{x}?id={id}{frameworkQuery}&take={queryConfiguration.MaxResults}&prerelease={queryConfiguration.IncludePreRelease}";

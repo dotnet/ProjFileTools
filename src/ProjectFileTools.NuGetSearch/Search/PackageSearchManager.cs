@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
@@ -27,11 +27,18 @@ namespace ProjectFileTools.NuGetSearch.Search
         {
             private readonly int _hashCode;
             private readonly string _prefix;
+            private readonly string _tfm;
+            private readonly PackageType _packageType;
 
-            public PackageNameQuery(string prefix, string tfm)
+            public PackageNameQuery(string prefix, string tfm, PackageType packageType)
             {
-                _hashCode = StringComparer.OrdinalIgnoreCase.GetHashCode(prefix ?? "") ^ (tfm?.GetHashCode() ?? 0);
+                _hashCode = StringComparer.OrdinalIgnoreCase.GetHashCode(prefix ?? "")
+                    ^ (tfm?.GetHashCode() ?? 0)
+                    ^ (packageType?.GetHashCode() ?? 0);
+
                 _prefix = prefix;
+                _tfm = tfm;
+                _packageType = packageType;
             }
 
             public override int GetHashCode()
@@ -39,23 +46,25 @@ namespace ProjectFileTools.NuGetSearch.Search
                 return _hashCode;
             }
 
-            public override bool Equals(object obj)
-            {
-                PackageNameQuery q = obj as PackageNameQuery;
-
-                return q != null && q._hashCode == _hashCode && string.Equals(_prefix, q._prefix, StringComparison.Ordinal);
-            }
+            public override bool Equals(object obj) =>
+                obj is PackageNameQuery q
+                && q._hashCode == _hashCode
+                && string.Equals(_prefix, q._prefix, StringComparison.Ordinal)
+                && string.Equals(_tfm, q._tfm, StringComparison.Ordinal)
+                && (_packageType?.Equals(q._packageType) ?? false);
         }
 
         private class PackageVersionQuery
         {
             private readonly int _hashCode;
             private readonly string _packageName;
+            private readonly string _tfm;
 
-            public PackageVersionQuery(string packageName, string tfm)
+            public PackageVersionQuery (string packageName, string tfm)
             {
                 _hashCode = StringComparer.OrdinalIgnoreCase.GetHashCode(packageName ?? "") ^ (tfm?.GetHashCode() ?? 0);
                 _packageName = packageName;
+                _tfm = tfm;
             }
 
             public override int GetHashCode()
@@ -63,34 +72,34 @@ namespace ProjectFileTools.NuGetSearch.Search
                 return _hashCode;
             }
 
-            public override bool Equals(object obj)
-            {
-                PackageVersionQuery q = obj as PackageVersionQuery;
-
-                return q != null && q._hashCode == _hashCode && string.Equals(_packageName, q._packageName, StringComparison.Ordinal);
-            }
+            public override bool Equals(object obj) =>
+                obj is PackageVersionQuery q
+                && q._hashCode == _hashCode
+                && string.Equals(_packageName, q._packageName, StringComparison.Ordinal)
+                && string.Equals(_tfm, q._tfm, StringComparison.Ordinal);
         }
 
-        public IPackageFeedSearchJob<Tuple<string, FeedKind>> SearchPackageNames(string prefix, string tfm)
+        public IPackageFeedSearchJob<Tuple<string, FeedKind>> SearchPackageNames(string prefix, string tfm, string packageType = null)
         {
-            PackageQueryConfiguration config = new PackageQueryConfiguration(tfm);
+            var packageTypeObj = packageType != null? new PackageType(packageType, null) : null;
+            var config = new PackageQueryConfiguration(tfm, packageType: packageTypeObj);
 
             var bag = _cachedNameSearches.GetOrAdd(config, x => new ConcurrentDictionary<PackageNameQuery, IPackageFeedSearchJob<Tuple<string, FeedKind>>>());
-            return bag.AddOrUpdate(new PackageNameQuery(prefix, tfm), x => SearchPackageNamesInternal(prefix, tfm, config), (x, e) =>
+            return bag.AddOrUpdate(new PackageNameQuery(prefix, tfm, packageTypeObj), x => SearchPackageNamesInternal(prefix, config), (x, e) =>
             {
                 if (e.IsCancelled)
                 {
-                    return SearchPackageNamesInternal(prefix, tfm, config);
+                    return SearchPackageNamesInternal(prefix, config);
                 }
 
                 return e;
             });
         }
 
-        private IPackageFeedSearchJob<Tuple<string, FeedKind>> SearchPackageNamesInternal(string prefix, string tfm, IPackageQueryConfiguration config)
+        private IPackageFeedSearchJob<Tuple<string, FeedKind>> SearchPackageNamesInternal(string prefix, IPackageQueryConfiguration config)
         {
-            List<Tuple<string, Task<IReadOnlyList<Tuple<string, FeedKind>>>>> searchTasks = new List<Tuple<string, Task<IReadOnlyList<Tuple<string, FeedKind>>>>>();
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            var searchTasks = new List<Tuple<string, Task<IReadOnlyList<Tuple<string, FeedKind>>>>>();
+            var cancellationTokenSource = new CancellationTokenSource();
             CancellationToken cancellationToken = cancellationTokenSource.Token;
 
             foreach (string feedSource in _feedRegistry.ConfiguredFeeds)
@@ -132,9 +141,10 @@ namespace ProjectFileTools.NuGetSearch.Search
             return packages;
         }
 
-        public IPackageFeedSearchJob<Tuple<string, FeedKind>> SearchPackageVersions(string packageName, string tfm)
+        public IPackageFeedSearchJob<Tuple<string, FeedKind>> SearchPackageVersions(string packageName, string tfm, string packageType = null)
         {
-            PackageQueryConfiguration config = new PackageQueryConfiguration(tfm);
+            var packageTypeObj = packageType != null ? new PackageType (packageType, null) : null;
+            var config = new PackageQueryConfiguration (tfm, packageType: packageTypeObj);
 
             var bag = _cachedVersionSearches.GetOrAdd(config, x => new ConcurrentDictionary<PackageVersionQuery, IPackageFeedSearchJob<Tuple<string, FeedKind>>>());
             return bag.AddOrUpdate(new PackageVersionQuery(packageName, tfm), x => SearchPackageVersionsInternal(packageName, tfm, config), (x, e) =>
